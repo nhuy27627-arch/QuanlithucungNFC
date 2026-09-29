@@ -1,0 +1,5980 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PetCare — Hệ thống quản lý thú cưng">
+  <title>PetCare — Quản lý thú cưng</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#F97316',
+            primaryDark: '#EA580C',
+            secondary: '#10B981',
+            cream: '#FFFDF9',
+            ink: '#1E293B'
+          },
+          boxShadow: {
+            soft: '0 10px 35px rgba(15, 23, 42, .07)',
+            card: '0 4px 20px rgba(15, 23, 42, .06)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fffdf9;
+      color: #1e293b;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+    }
+
+    .sidebar-transition {
+      transition: transform .3s ease, width .3s ease;
+    }
+
+    .modal-backdrop {
+      animation: fadeIn .2s ease forwards;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-panel {
+      animation: modalIn .25s ease forwards;
+    }
+
+    .modal-closing {
+      animation: fadeOut .18s ease forwards;
+    }
+
+    .modal-panel-closing {
+      animation: modalOut .18s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+      }
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes modalOut {
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateY(12px) scale(.98);
+      }
+    }
+
+    .pet-card {
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .pet-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 35px rgba(15, 23, 42, .10);
+      border-color: rgba(249, 115, 22, .18);
+    }
+
+    .nav-item {
+      transition: all .2s ease;
+    }
+
+    .nav-item.active {
+      background: #fff1e8;
+      color: #ea580c;
+      font-weight: 700;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 99px;
+    }
+
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+    }
+
+    input,
+    select,
+    textarea {
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #f97316 !important;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, .12);
+    }
+
+    input.invalid,
+    select.invalid,
+    textarea.invalid {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, .08);
+    }
+
+    .toast {
+      animation: toastIn .3s ease forwards;
+    }
+
+    .toast.removing {
+      animation: toastOut .22s ease forwards;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(-12px) translateX(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) translateX(0);
+      }
+    }
+
+    @keyframes toastOut {
+      from {
+        opacity: 1;
+        transform: translateY(0) translateX(0);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateY(-8px) translateX(8px);
+      }
+    }
+
+    .avatar-ring {
+      box-shadow: 0 0 0 4px rgba(249, 115, 22, .10);
+    }
+
+    .stat-icon {
+      transition: transform .25s ease;
+    }
+
+    .stat-card:hover .stat-icon {
+      transform: scale(1.08) rotate(-4deg);
+    }
+
+    .mobile-overlay {
+      transition: opacity .25s ease;
+    }
+
+    .empty-state {
+      animation: fadeIn .25s ease;
+    }
+
+    .image-preview-bg {
+      background-image:
+        linear-gradient(45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(-45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f1f5f9 75%),
+        linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    .form-label-required::after {
+      content: ' *';
+      color: #ef4444;
+    }
+
+    .no-scroll {
+      overflow: hidden;
+    }
+
+    /* =========================================================
+       OWNER AUTHENTICATION + NFC
+    ========================================================== */
+
+    .auth-shell {
+      background:
+        radial-gradient(circle at 10% 10%, rgba(249,115,22,.14), transparent 28%),
+        radial-gradient(circle at 90% 85%, rgba(16,185,129,.12), transparent 28%),
+        #fffdf9;
+    }
+
+    .auth-card {
+      animation: modalIn .35s ease forwards;
+    }
+
+    .auth-tab.active {
+      background: #fff1e8;
+      color: #ea580c;
+      font-weight: 800;
+    }
+
+    .nfc-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: .08em;
+    }
+
+    .nfc-pulse {
+      box-shadow: 0 0 0 0 rgba(249,115,22,.32);
+      animation: nfcPulse 2s infinite;
+    }
+
+    @keyframes nfcPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(249,115,22,.30);
+      }
+
+      70% {
+        box-shadow: 0 0 0 18px rgba(249,115,22,0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(249,115,22,0);
+      }
+    }
+
+    .public-nfc-card {
+      animation: modalIn .3s ease forwards;
+    }
+
+    .app-hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1023px) {
+      .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        z-index: 60;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- =========================
+       OWNER LOGIN / REGISTER
+  ========================== -->
+  <section id="authGate" class="auth-shell fixed inset-0 z-[200] min-h-screen overflow-y-auto">
+    <div class="min-h-screen flex items-center justify-center p-4 sm:p-6">
+      <div class="auth-card w-full max-w-5xl grid lg:grid-cols-[1.05fr_.95fr] bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden">
+
+        <div class="hidden lg:flex relative p-10 xl:p-14 bg-gradient-to-br from-orange-500 via-orange-500 to-emerald-500 text-white flex-col justify-between">
+          <div
+            class="absolute inset-0 opacity-20"
+            style="background-image:radial-gradient(circle at 20% 20%,#fff 0 2px,transparent 2px),radial-gradient(circle at 80% 70%,#fff 0 2px,transparent 2px);background-size:34px 34px">
+          </div>
+
+          <div class="relative">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                <i class="fa-solid fa-paw text-2xl"></i>
+              </div>
+
+              <div>
+                <div class="text-2xl font-extrabold">
+                  Pet<span class="text-orange-100">Care</span>
+                </div>
+
+                <div class="text-xs text-white/70 font-semibold tracking-widest">
+                  PET MANAGEMENT
+                </div>
+              </div>
+            </div>
+
+            <h1 class="text-4xl xl:text-5xl font-extrabold leading-tight mt-16">
+              Một tài khoản.<br>
+              Quản lý tất cả bé cưng.
+            </h1>
+
+            <p class="text-white/80 mt-5 max-w-md leading-relaxed">
+              Đăng nhập một lần để xem lại toàn bộ hồ sơ thú cưng của bạn.
+              Mỗi bé được cấp một mã NFC riêng để gắn chip và tra cứu nhanh.
+            </p>
+          </div>
+
+          <div class="relative grid grid-cols-3 gap-3 mt-10">
+            <div class="rounded-2xl bg-white/10 border border-white/15 p-4">
+              <i class="fa-solid fa-shield-halved"></i>
+              <div class="text-sm font-bold mt-3">Tài khoản riêng</div>
+            </div>
+
+            <div class="rounded-2xl bg-white/10 border border-white/15 p-4">
+              <i class="fa-solid fa-paw"></i>
+              <div class="text-sm font-bold mt-3">Hồ sơ tập trung</div>
+            </div>
+
+            <div class="rounded-2xl bg-white/10 border border-white/15 p-4">
+              <i class="fa-solid fa-wifi"></i>
+              <div class="text-sm font-bold mt-3">NFC nhanh</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 sm:p-9 xl:p-12">
+
+          <div class="lg:hidden flex items-center gap-3 mb-8">
+            <div class="w-11 h-11 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-200">
+              <i class="fa-solid fa-paw text-xl"></i>
+            </div>
+
+            <div>
+              <div class="font-extrabold text-xl">
+                Pet<span class="text-orange-500">Care</span>
+              </div>
+
+              <div class="text-[10px] text-slate-400 font-bold tracking-widest">
+                PET MANAGEMENT
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-7">
+            <p class="text-sm text-orange-500 font-bold">
+              Khu vực chủ nuôi
+            </p>
+
+            <h2 id="authTitle" class="text-3xl font-extrabold tracking-tight mt-1">
+              Đăng nhập
+            </h2>
+
+            <p id="authSubtitle" class="text-sm text-slate-500 mt-2">
+              Đăng nhập để xem toàn bộ thú cưng của bạn.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 bg-slate-50 rounded-2xl p-1 mb-6">
+            <button
+              id="authLoginTab"
+              type="button"
+              class="auth-tab active rounded-xl py-2.5 text-sm transition">
+              Đăng nhập
+            </button>
+
+            <button
+              id="authRegisterTab"
+              type="button"
+              class="auth-tab rounded-xl py-2.5 text-sm text-slate-500 transition">
+              Tạo tài khoản
+            </button>
+          </div>
+
+          <form id="authForm" class="space-y-4" novalidate>
+
+            <div>
+              <label
+                for="authName"
+                id="authNameLabel"
+                class="hidden text-sm font-semibold text-slate-700 mb-2">
+                Họ và tên
+              </label>
+
+              <input
+                id="authName"
+                type="text"
+                maxlength="80"
+                autocomplete="name"
+                class="hidden w-full border border-slate-200 rounded-xl px-4 py-3.5 text-sm"
+                placeholder="Nguyễn Văn A">
+
+              <p
+                id="authNameError"
+                class="hidden text-xs text-red-500 mt-1.5">
+              </p>
+            </div>
+
+            <div>
+              <label
+                for="authEmail"
+                class="block text-sm font-semibold text-slate-700 mb-2">
+                Email
+              </label>
+
+              <input
+                id="authEmail"
+                type="email"
+                maxlength="120"
+                autocomplete="email"
+                required
+                class="w-full border border-slate-200 rounded-xl px-4 py-3.5 text-sm"
+                placeholder="ban@example.com">
+
+              <p
+                id="authEmailError"
+                class="hidden text-xs text-red-500 mt-1.5">
+              </p>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label
+                  for="authPassword"
+                  class="block text-sm font-semibold text-slate-700">
+                  Mật khẩu
+                </label>
+
+                <span class="text-[11px] text-slate-400">
+                  Tối thiểu 6 ký tự
+                </span>
+              </div>
+
+              <div class="relative">
+                <input
+                  id="authPassword"
+                  type="password"
+                  minlength="6"
+                  maxlength="128"
+                  autocomplete="current-password"
+                  required
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3.5 pr-12 text-sm"
+                  placeholder="••••••••">
+
+                <button
+                  id="togglePasswordButton"
+                  type="button"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg text-slate-400 hover:bg-slate-100"
+                  aria-label="Hiện mật khẩu">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
+
+              <p
+                id="authPasswordError"
+                class="hidden text-xs text-red-500 mt-1.5">
+              </p>
+            </div>
+
+            <div
+              id="authDemoHint"
+              class="rounded-2xl bg-orange-50 border border-orange-100 p-4 text-xs text-orange-800 leading-relaxed">
+              <div class="font-bold flex items-center gap-2">
+                <i class="fa-solid fa-circle-info"></i>
+                Chạy thử nhanh
+              </div>
+
+              <div class="mt-1">
+                Bạn có thể tạo tài khoản mới ngay trên trình duyệt này.
+                Dữ liệu được lưu cục bộ trên thiết bị.
+              </div>
+            </div>
+
+            <button
+              id="authSubmitButton"
+              type="submit"
+              class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-200 transition">
+              <i class="fa-solid fa-right-to-bracket mr-2"></i>
+              <span id="authSubmitText">Đăng nhập</span>
+            </button>
+          </form>
+
+          <div class="mt-7 pt-5 border-t border-slate-100 text-center text-[11px] text-slate-400 leading-relaxed">
+            Đây là ứng dụng frontend chạy trên trình duyệt.
+            Để triển khai tài khoản thật nhiều thiết bị, hãy kết nối backend/database và xác thực máy chủ.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       PUBLIC NFC PET VIEW
+  ========================== -->
+  <section
+    id="nfcPublicView"
+    class="hidden fixed inset-0 z-[210] overflow-y-auto bg-slate-50">
+
+    <div class="min-h-screen p-4 sm:p-8">
+      <div class="max-w-3xl mx-auto">
+
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-200">
+              <i class="fa-solid fa-wifi"></i>
+            </div>
+
+            <div>
+              <div class="font-extrabold text-xl">
+                Pet<span class="text-orange-500">Care</span>
+              </div>
+
+              <div class="text-[10px] text-slate-400 font-bold tracking-widest">
+                NFC PET PROFILE
+              </div>
+            </div>
+          </div>
+
+          <button
+            id="nfcBackButton"
+            type="button"
+            class="hidden px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50">
+            <i class="fa-solid fa-arrow-left mr-2"></i>
+            Vào hệ thống
+          </button>
+        </div>
+
+        <div id="nfcPublicContent"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Toast -->
+  <div
+    id="toastContainer"
+    class="fixed top-5 right-5 z-[300] space-y-3 w-[min(380px,calc(100vw-2rem))]"
+    aria-live="polite"
+    aria-atomic="true">
+  </div>
+
+  <!-- Mobile overlay -->
+  <div
+    id="mobileOverlay"
+    class="mobile-overlay fixed inset-0 bg-slate-900/40 z-50 hidden opacity-0 lg:hidden"
+    aria-hidden="true">
+  </div>
+
+  <!-- Sidebar -->
+  <aside
+    id="sidebar"
+    class="sidebar sidebar-transition w-72 bg-white border-r border-slate-100 min-h-screen fixed left-0 top-0 z-[60] lg:translate-x-0">
+
+    <div class="h-full flex flex-col">
+
+      <div class="h-20 px-6 flex items-center border-b border-slate-100">
+        <div class="w-11 h-11 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-200">
+          <i class="fa-solid fa-paw text-xl"></i>
+        </div>
+
+        <div class="ml-3">
+          <div class="font-extrabold text-xl tracking-tight">
+            Pet<span class="text-orange-500">Care</span>
+          </div>
+
+          <div class="text-[11px] text-slate-400 font-medium">
+            PET MANAGEMENT
+          </div>
+        </div>
+
+        <button
+          id="closeSidebarButton"
+          type="button"
+          class="lg:hidden ml-auto w-9 h-9 rounded-xl hover:bg-slate-100 text-slate-500 transition"
+          aria-label="Đóng menu">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <nav class="p-4 flex-1">
+
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-3">
+          Tổng quan
+        </div>
+
+        <button
+          class="nav-item active w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-1 text-left"
+          data-section="dashboard"
+          type="button">
+          <i class="fa-solid fa-chart-pie w-5"></i>
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-1 text-left text-slate-600 hover:bg-slate-50"
+          data-section="pets"
+          type="button">
+          <i class="fa-solid fa-paw w-5"></i>
+          <span>Thú cưng</span>
+
+          <span
+            id="sidebarPetCount"
+            class="ml-auto text-xs bg-slate-100 px-2 py-0.5 rounded-full">
+            0
+          </span>
+        </button>
+
+        <button
+          class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-1 text-left text-slate-600 hover:bg-slate-50"
+          data-section="health"
+          type="button">
+          <i class="fa-solid fa-heart-pulse w-5"></i>
+          <span>Sức khỏe & Lịch</span>
+        </button>
+
+        <button
+          class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-1 text-left text-slate-600 hover:bg-slate-50"
+          data-section="expenses"
+          type="button">
+          <i class="fa-solid fa-wallet w-5"></i>
+          <span>Chi phí</span>
+        </button>
+
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-3 mt-8">
+          Tiện ích
+        </div>
+
+        <button
+          id="sidebarAddPetButton"
+          type="button"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-orange-600 bg-orange-50 hover:bg-orange-100 transition font-semibold">
+          <i class="fa-solid fa-plus w-5"></i>
+          <span>Thêm thú cưng</span>
+        </button>
+
+        <button
+          id="sidebarScanNfcButton"
+          type="button"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition font-semibold mt-2">
+          <i class="fa-solid fa-wifi w-5"></i>
+          <span>Quét NFC</span>
+        </button>
+      </nav>
+
+      <div class="p-4">
+        <div class="rounded-2xl bg-gradient-to-br from-orange-50 to-emerald-50 p-4 border border-orange-100">
+          <div class="w-9 h-9 rounded-xl bg-white text-orange-500 flex items-center justify-center mb-3 shadow-sm">
+            <i class="fa-solid fa-heart"></i>
+          </div>
+
+          <div class="font-bold text-sm">
+            Chăm sóc tốt hơn
+          </div>
+
+          <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+            Theo dõi sức khỏe và lịch chăm sóc thú cưng mỗi ngày.
+          </p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="lg:ml-72 min-h-screen">
+
+    <header class="h-20 bg-white/90 backdrop-blur border-b border-slate-100 sticky top-0 z-40">
+      <div class="h-full px-4 sm:px-6 lg:px-8 flex items-center gap-4">
+
+        <button
+          id="openSidebarButton"
+          type="button"
+          class="lg:hidden w-10 h-10 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition"
+          aria-label="Mở menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="relative flex-1 max-w-xl">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+          <input
+            id="globalSearch"
+            type="search"
+            autocomplete="off"
+            placeholder="Tìm thú cưng theo tên hoặc giống..."
+            class="w-full bg-slate-50 border border-transparent rounded-xl py-3 pl-11 pr-4 text-sm placeholder:text-slate-400">
+        </div>
+
+        <div class="hidden sm:flex items-center gap-3">
+
+          <button
+            id="notificationButton"
+            type="button"
+            class="relative w-11 h-11 rounded-xl hover:bg-slate-50 text-slate-500 transition"
+            title="Nhắc nhở"
+            aria-label="Nhắc nhở">
+            <i class="fa-regular fa-bell text-lg"></i>
+
+            <span
+              id="notificationDot"
+              class="absolute top-2.5 right-2.5 w-2 h-2 bg-orange-500 rounded-full">
+            </span>
+          </button>
+
+          <div class="w-px h-8 bg-slate-200"></div>
+
+          <div class="flex items-center gap-2">
+
+            <div class="flex items-center gap-3">
+              <div
+                id="headerOwnerAvatar"
+                class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-user"></i>
+              </div>
+
+              <div class="hidden xl:block">
+                <div id="headerOwnerName" class="text-sm font-bold">
+                  Chủ nhân
+                </div>
+
+                <div class="text-xs text-slate-400">
+                  Pet Parent
+                </div>
+              </div>
+            </div>
+
+            <button
+              id="logoutButton"
+              type="button"
+              class="w-10 h-10 rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition"
+              title="Đăng xuất"
+              aria-label="Đăng xuất">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+          </div>
+        </div>
+
+        <button
+          id="headerAddPetButton"
+          type="button"
+          class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-orange-200 transition flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-plus"></i>
+          <span class="hidden sm:inline">Thêm thú cưng</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+
+      <!-- =========================
+           DASHBOARD
+      ========================== -->
+      <section id="section-dashboard" class="section">
+
+        <div class="mb-7">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+
+            <div>
+              <p class="text-sm text-orange-500 font-semibold mb-1">
+                Xin chào 👋
+              </p>
+
+              <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Tổng quan hôm nay
+              </h1>
+
+              <p class="text-slate-500 mt-2 text-sm">
+                Theo dõi những điều quan trọng nhất về các bé cưng của bạn.
+              </p>
+            </div>
+
+            <div
+              id="currentDate"
+              class="text-sm text-slate-500 bg-white border border-slate-100 px-4 py-2.5 rounded-xl">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-7">
+
+          <div class="stat-card bg-white rounded-2xl border border-slate-100 p-5 shadow-card">
+            <div class="flex items-start justify-between">
+
+              <div>
+                <p class="text-sm text-slate-500">
+                  Tổng thú cưng
+                </p>
+
+                <p id="statPets" class="text-3xl font-extrabold mt-2">
+                  0
+                </p>
+
+                <p class="text-xs text-emerald-600 font-semibold mt-2">
+                  <i class="fa-solid fa-heart mr-1"></i>
+                  Đang được chăm sóc
+                </p>
+              </div>
+
+              <div class="stat-icon w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-paw"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card bg-white rounded-2xl border border-slate-100 p-5 shadow-card">
+            <div class="flex items-start justify-between">
+
+              <div>
+                <p class="text-sm text-slate-500">
+                  Lịch sắp tới
+                </p>
+
+                <p id="statAppointments" class="text-3xl font-extrabold mt-2">
+                  0
+                </p>
+
+                <p class="text-xs text-blue-600 font-semibold mt-2">
+                  <i class="fa-regular fa-calendar mr-1"></i>
+                  Cuộc hẹn
+                </p>
+              </div>
+
+              <div class="stat-icon w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card bg-white rounded-2xl border border-slate-100 p-5 shadow-card">
+            <div class="flex items-start justify-between">
+
+              <div>
+                <p class="text-sm text-slate-500">
+                  Mũi tiêm nhắc
+                </p>
+
+                <p id="statVaccines" class="text-3xl font-extrabold mt-2">
+                  0
+                </p>
+
+                <p class="text-xs text-amber-600 font-semibold mt-2">
+                  <i class="fa-solid fa-syringe mr-1"></i>
+                  Cần chú ý
+                </p>
+              </div>
+
+              <div class="stat-icon w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-syringe"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card bg-white rounded-2xl border border-slate-100 p-5 shadow-card">
+            <div class="flex items-start justify-between">
+
+              <div>
+                <p class="text-sm text-slate-500">
+                  Chi phí tháng này
+                </p>
+
+                <p id="statExpenses" class="text-2xl font-extrabold mt-2">
+                  0 ₫
+                </p>
+
+                <p class="text-xs text-slate-500 font-semibold mt-2">
+                  <i class="fa-solid fa-chart-line mr-1"></i>
+                  Tổng chi tiêu
+                </p>
+              </div>
+
+              <div class="stat-icon w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between gap-3">
+
+              <div>
+                <h2 class="font-bold text-lg">
+                  Các bé cưng
+                </h2>
+
+                <p class="text-xs text-slate-400 mt-1">
+                  Danh sách thú cưng của bạn
+                </p>
+              </div>
+
+              <button
+                id="viewAllPetsButton"
+                type="button"
+                class="text-sm text-orange-500 font-semibold hover:text-orange-600 transition">
+                Xem tất cả
+                <i class="fa-solid fa-arrow-right ml-1"></i>
+              </button>
+            </div>
+
+            <div
+              id="dashboardPets"
+              class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+
+            <div class="p-5 border-b border-slate-100">
+              <h2 class="font-bold text-lg">
+                Lịch sắp tới
+              </h2>
+
+              <p class="text-xs text-slate-400 mt-1">
+                Những việc cần nhớ
+              </p>
+            </div>
+
+            <div
+              id="dashboardAppointments"
+              class="p-5 space-y-3 max-h-[430px] overflow-y-auto custom-scrollbar">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================
+           PETS
+      ========================== -->
+      <section id="section-pets" class="section hidden">
+
+        <div class="mb-6 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+
+          <div>
+            <p class="text-sm text-orange-500 font-semibold mb-1">
+              Hồ sơ
+            </p>
+
+            <h1 class="text-2xl sm:text-3xl font-extrabold">
+              Thú cưng của tôi
+            </h1>
+
+            <p class="text-slate-500 text-sm mt-2">
+              Quản lý thông tin và tình trạng sức khỏe của từng bé.
+            </p>
+          </div>
+
+          <button
+            id="petsAddPetButton"
+            type="button"
+            class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-xl font-semibold shadow-lg shadow-orange-200 transition">
+            <i class="fa-solid fa-plus mr-2"></i>
+            Thêm thú cưng
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4 mb-6">
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+              <input
+                id="petSearch"
+                type="text"
+                autocomplete="off"
+                placeholder="Tìm theo tên hoặc giống..."
+                class="w-full border border-slate-200 rounded-xl py-3 pl-11 pr-4 text-sm">
+            </div>
+
+            <select
+              id="speciesFilter"
+              class="border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white">
+              <option value="all">Tất cả loài</option>
+              <option value="Chó">Chó</option>
+              <option value="Mèo">Mèo</option>
+              <option value="Khác">Khác</option>
+            </select>
+
+            <select
+              id="genderFilter"
+              class="border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white">
+              <option value="all">Tất cả giới tính</option>
+              <option value="Đực">Đực</option>
+              <option value="Cái">Cái</option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          id="petsList"
+          class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+        </div>
+      </section>
+
+      <!-- =========================
+           HEALTH
+      ========================== -->
+      <section id="section-health" class="section hidden">
+
+        <div class="mb-6">
+          <p class="text-sm text-orange-500 font-semibold mb-1">
+            Theo dõi
+          </p>
+
+          <h1 class="text-2xl sm:text-3xl font-extrabold">
+            Sức khỏe & Lịch
+          </h1>
+
+          <p class="text-slate-500 text-sm mt-2">
+            Theo dõi tiêm chủng, lịch khám và các hoạt động chăm sóc.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-5">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4">
+              <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <h2 class="font-bold text-lg">
+              Hồ sơ sức khỏe
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-2">
+              Quản lý thông tin sức khỏe cho từng thú cưng.
+            </p>
+
+            <button
+              id="healthAddPetButton"
+              type="button"
+              class="mt-5 text-sm font-semibold text-orange-500 hover:text-orange-600 transition">
+              Thêm thú cưng
+              <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-5">
+            <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mb-4">
+              <i class="fa-solid fa-syringe"></i>
+            </div>
+
+            <h2 class="font-bold text-lg">
+              Tiêm chủng
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-2">
+              Hiện chưa có lịch tiêm chủng được nhập.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-5">
+            <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mb-4">
+              <i class="fa-regular fa-calendar-check"></i>
+            </div>
+
+            <h2 class="font-bold text-lg">
+              Lịch hẹn
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-2">
+              Hiện chưa có cuộc hẹn nào được nhập.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================
+           EXPENSES
+      ========================== -->
+      <section id="section-expenses" class="section hidden">
+
+        <div class="mb-6">
+          <p class="text-sm text-orange-500 font-semibold mb-1">
+            Tài chính
+          </p>
+
+          <h1 class="text-2xl sm:text-3xl font-extrabold">
+            Chi phí
+          </h1>
+
+          <p class="text-slate-500 text-sm mt-2">
+            Tổng hợp các khoản chi tiêu liên quan đến thú cưng.
+          </p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-8 text-center">
+
+          <div class="mx-auto w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+
+          <h2 class="text-lg font-bold mt-4">
+            Chưa có dữ liệu chi phí
+          </h2>
+
+          <p class="text-sm text-slate-500 mt-2 max-w-md mx-auto">
+            Khi hệ thống có dữ liệu chi phí, tổng chi tiêu sẽ được hiển thị tại đây.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- =========================
+       ADD / EDIT PET MODAL
+  ========================== -->
+  <div
+    id="petModal"
+    class="fixed inset-0 z-[80] hidden items-center justify-center p-4 bg-slate-900/45 modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="petModalTitle">
+
+    <div
+      id="petModalPanel"
+      class="modal-panel relative w-full max-w-3xl max-h-[92vh] overflow-y-auto custom-scrollbar bg-white rounded-3xl shadow-2xl">
+
+      <div class="sticky top-0 z-10 bg-white border-b border-slate-100 px-5 sm:px-7 py-5 flex items-center justify-between gap-4">
+
+        <div>
+          <div class="flex items-center gap-3">
+
+            <div class="w-11 h-11 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center">
+              <i class="fa-solid fa-paw"></i>
+            </div>
+
+            <div>
+              <h2
+                id="petModalTitle"
+                class="text-xl sm:text-2xl font-extrabold">
+                Thêm thú cưng
+              </h2>
+
+              <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+                Tạo hồ sơ đầy đủ cho bé cưng của bạn.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <button
+          id="closePetModalButton"
+          type="button"
+          class="w-10 h-10 rounded-xl text-slate-500 hover:bg-slate-100 transition"
+          aria-label="Đóng cửa sổ">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="petForm" novalidate>
+
+        <div class="p-5 sm:p-7 space-y-7">
+
+          <!-- Avatar -->
+          <div>
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+
+              <div class="relative shrink-0">
+                <div
+                  id="petImagePreview"
+                  class="image-preview-bg w-28 h-28 rounded-3xl border border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50 avatar-ring">
+
+                  <div
+                    id="petImagePlaceholder"
+                    class="text-center px-3">
+                    <i class="fa-solid fa-paw text-2xl text-orange-300"></i>
+
+                    <div class="text-[11px] text-slate-400 font-medium mt-2">
+                      Ảnh bé cưng
+                    </div>
+                  </div>
+
+                  <img
+                    id="petImage"
+                    src=""
+                    alt="Ảnh thú cưng"
+                    class="hidden w-full h-full object-cover">
+                </div>
+
+                <button
+                  id="removePetImageButton"
+                  type="button"
+                  class="hidden absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:text-red-500 transition"
+                  title="Xóa ảnh"
+                  aria-label="Xóa ảnh">
+                  <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+              </div>
+
+              <div class="text-center sm:text-left">
+                <div class="font-bold text-sm">
+                  Ảnh đại diện
+                </div>
+
+                <p class="text-xs text-slate-400 mt-1 max-w-md leading-relaxed">
+                  Chọn ảnh JPG, PNG hoặc WEBP. Ảnh sẽ được lưu trực tiếp trong trình duyệt của bạn.
+                </p>
+
+                <div class="mt-4">
+                  <label
+                    for="petPhotoInput"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold transition">
+                    <i class="fa-solid fa-image text-orange-500"></i>
+                    Chọn ảnh
+                  </label>
+
+                  <input
+                    id="petPhotoInput"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    class="sr-only">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Basic info -->
+          <div>
+
+            <div class="text-sm font-bold mb-4">
+              Thông tin cơ bản
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div>
+                <label
+                  for="petName"
+                  class="form-label-required block text-sm font-semibold text-slate-700 mb-2">
+                  Tên thú cưng
+                </label>
+
+                <input
+                  id="petName"
+                  name="name"
+                  type="text"
+                  maxlength="50"
+                  autocomplete="off"
+                  placeholder="Ví dụ: Momo"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+
+                <p
+                  id="petNameError"
+                  class="hidden text-xs text-red-500 mt-1.5">
+                </p>
+              </div>
+
+              <div>
+                <label
+                  for="petSpecies"
+                  class="form-label-required block text-sm font-semibold text-slate-700 mb-2">
+                  Loài
+                </label>
+
+                <select
+                  id="petSpecies"
+                  name="species"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white">
+                  <option value="">Chọn loài</option>
+                  <option value="Chó">Chó</option>
+                  <option value="Mèo">Mèo</option>
+                  <option value="Khác">Khác</option>
+                </select>
+
+                <p
+                  id="petSpeciesError"
+                  class="hidden text-xs text-red-500 mt-1.5">
+                </p>
+              </div>
+
+              <div>
+                <label
+                  for="petBreed"
+                  class="form-label-required block text-sm font-semibold text-slate-700 mb-2">
+                  Giống
+                </label>
+
+                <input
+                  id="petBreed"
+                  name="breed"
+                  type="text"
+                  maxlength="60"
+                  autocomplete="off"
+                  placeholder="Ví dụ: Poodle"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+
+                <p
+                  id="petBreedError"
+                  class="hidden text-xs text-red-500 mt-1.5">
+                </p>
+              </div>
+
+              <div>
+                <label
+                  for="petGender"
+                  class="form-label-required block text-sm font-semibold text-slate-700 mb-2">
+                  Giới tính
+                </label>
+
+                <select
+                  id="petGender"
+                  name="gender"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white">
+                  <option value="">Chọn giới tính</option>
+                  <option value="Đực">Đực</option>
+                  <option value="Cái">Cái</option>
+                </select>
+
+                <p
+                  id="petGenderError"
+                  class="hidden text-xs text-red-500 mt-1.5">
+                </p>
+              </div>
+
+              <div>
+                <label
+                  for="petBirthDate"
+                  class="block text-sm font-semibold text-slate-700 mb-2">
+                  Ngày sinh
+                </label>
+
+                <input
+                  id="petBirthDate"
+                  name="birthDate"
+                  type="date"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+
+                <p
+                  id="petBirthDateError"
+                  class="hidden text-xs text-red-500 mt-1.5">
+                </p>
+              </div>
+
+              <div>
+                <label
+                  for="petWeight"
+                  class="block text-sm font-semibold text-slate-700 mb-2">
+                  Cân nặng (kg)
+                </label>
+
+                <input
+                  id="petWeight"
+                  name="weight"
+                  type="number"
+                  min="0"
+                  max="999"
+                  step="0.1"
+                  inputmode="decimal"
+                  placeholder="Ví dụ: 4.5"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+
+                <p
+                  id="petWeightError"
+                  class="hidden text-xs text-red-500 mt-1.5">
+                </p>
+              </div>
+
+              <div>
+                <label
+                  for="petColor"
+                  class="block text-sm font-semibold text-slate-700 mb-2">
+                  Màu lông
+                </label>
+
+                <input
+                  id="petColor"
+                  name="color"
+                  type="text"
+                  maxlength="40"
+                  autocomplete="off"
+                  placeholder="Ví dụ: Trắng kem"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+              </div>
+
+              <div>
+                <label
+                  for="petMicrochip"
+                  class="block text-sm font-semibold text-slate-700 mb-2">
+                  Mã Microchip
+                </label>
+
+                <input
+                  id="petMicrochip"
+                  name="microchip"
+                  type="text"
+                  maxlength="30"
+                  autocomplete="off"
+                  placeholder="Nếu có"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+
+                <p
+                  id="petMicrochipError"
+                  class="hidden text-xs text-red-500 mt-1.5">
+                </p>
+              </div>
+            </div>
+
+            <!-- NFC -->
+            <div class="mt-5 rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4 sm:p-5">
+
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+                <div>
+                  <div class="flex items-center gap-2 text-sm font-extrabold text-slate-800">
+                    <span class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center">
+                      <i class="fa-solid fa-wifi"></i>
+                    </span>
+
+                    Mã NFC của thú cưng
+                  </div>
+
+                  <p class="text-xs text-slate-500 mt-2 leading-relaxed max-w-xl">
+                    Mỗi bé có một mã NFC duy nhất. Bạn có thể ghi đường dẫn hồ sơ vào chip NFC tương thích để khi chạm điện thoại sẽ mở thông tin của bé.
+                  </p>
+                </div>
+
+                <div class="shrink-0 text-center">
+                  <div
+                    id="petNfcCodePreview"
+                    class="nfc-code font-extrabold text-orange-600 text-sm">
+                    Tự động tạo
+                  </div>
+
+                  <div class="text-[10px] text-slate-400 mt-1">
+                    Tạo tự động khi lưu
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Owner -->
+          <div>
+
+            <div class="text-sm font-bold mb-4">
+              Thông tin người chăm sóc
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div>
+                <label
+                  for="ownerName"
+                  class="block text-sm font-semibold text-slate-700 mb-2">
+                  Tên người chăm sóc
+                </label>
+
+                <input
+                  id="ownerName"
+                  name="ownerName"
+                  type="text"
+                  maxlength="60"
+                  autocomplete="name"
+                  value="Chủ nhân"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+              </div>
+
+              <div>
+                <label
+                  for="ownerPhone"
+                  class="block text-sm font-semibold text-slate-700 mb-2">
+                  Số điện thoại
+                </label>
+
+                <input
+                  id="ownerPhone"
+                  name="ownerPhone"
+                  type="tel"
+                  maxlength="20"
+                  autocomplete="tel"
+                  placeholder="Ví dụ: 0901234567"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm">
+
+                <p
+                  id="ownerPhoneError"
+                  class="hidden text-xs text-red-500 mt-1.5">
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div>
+
+            <label
+              for="petNotes"
+              class="block text-sm font-semibold text-slate-700 mb-2">
+              Ghi chú chăm sóc
+            </label>
+
+            <textarea
+              id="petNotes"
+              name="notes"
+              maxlength="500"
+              rows="4"
+              placeholder="Ví dụ: Dị ứng thức ăn, thích ăn hạt, sợ tiếng lớn..."
+              class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm resize-y"></textarea>
+
+            <div class="flex justify-end mt-1">
+              <span
+                id="notesCounter"
+                class="text-[11px] text-slate-400">
+                0/500
+              </span>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="border-t border-slate-100 pt-5 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+
+            <button
+              id="cancelPetButton"
+              type="button"
+              class="px-5 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition">
+              Hủy
+            </button>
+
+            <button
+              id="savePetButton"
+              type="submit"
+              class="px-5 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm transition shadow-lg shadow-orange-200 disabled:opacity-60 disabled:pointer-events-none">
+              <i id="savePetIcon" class="fa-solid fa-plus mr-2"></i>
+              <span id="savePetText">Lưu thú cưng</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================
+       DELETE CONFIRM MODAL
+  ========================== -->
+  <div
+    id="deleteModal"
+    class="fixed inset-0 z-[90] hidden items-center justify-center p-4 bg-slate-900/45 modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deleteModalTitle">
+
+    <div class="modal-panel bg-white w-full max-w-md rounded-3xl shadow-2xl p-6">
+
+      <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center">
+        <i class="fa-solid fa-trash"></i>
+      </div>
+
+      <h2
+        id="deleteModalTitle"
+        class="text-xl font-extrabold mt-4">
+        Xóa thú cưng?
+      </h2>
+
+      <p
+        id="deleteModalDescription"
+        class="text-sm text-slate-500 mt-2 leading-relaxed">
+        Dữ liệu hồ sơ sẽ bị xóa khỏi trình duyệt.
+      </p>
+
+      <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+
+        <button
+          id="cancelDeleteButton"
+          type="button"
+          class="px-5 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition">
+          Hủy
+        </button>
+
+        <button
+          id="confirmDeleteButton"
+          type="button"
+          class="px-5 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition">
+          Xóa hồ sơ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      /* =========================================================
+         CONFIG
+      ========================================================== */
+
+      const STORAGE_KEY = 'petcare_pets_v1';
+      const ACCOUNTS_KEY = 'petcare_accounts_v1';
+      const SESSION_KEY = 'petcare_session_v1';
+      const OWNER_PETS_PREFIX = 'petcare_owner_pets_v2_';
+      const APP_VERSION = '2.0.0';
+
+      const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+      const MAX_NAME_LENGTH = 50;
+      const MAX_BREED_LENGTH = 60;
+
+      /* =========================================================
+         STATE
+      ========================================================== */
+
+      let pets = [];
+      let editingPetId = null;
+      let pendingDeletePetId = null;
+      let pendingImageData = '';
+
+      let currentOwner = null;
+      let authMode = 'login';
+      let authBusy = false;
+
+      /* =========================================================
+         DOM HELPERS
+      ========================================================== */
+
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+      /* =========================================================
+         ELEMENTS
+      ========================================================== */
+
+      const elements = {
+        body: document.body,
+
+        sidebar: $('#sidebar'),
+        mobileOverlay: $('#mobileOverlay'),
+        openSidebarButton: $('#openSidebarButton'),
+        closeSidebarButton: $('#closeSidebarButton'),
+
+        toastContainer: $('#toastContainer'),
+
+        globalSearch: $('#globalSearch'),
+        petSearch: $('#petSearch'),
+        speciesFilter: $('#speciesFilter'),
+        genderFilter: $('#genderFilter'),
+
+        dashboardPets: $('#dashboardPets'),
+        dashboardAppointments: $('#dashboardAppointments'),
+
+        statPets: $('#statPets'),
+        statAppointments: $('#statAppointments'),
+        statVaccines: $('#statVaccines'),
+        statExpenses: $('#statExpenses'),
+        sidebarPetCount: $('#sidebarPetCount'),
+        currentDate: $('#currentDate'),
+        notificationDot: $('#notificationDot'),
+
+        petModal: $('#petModal'),
+        petModalPanel: $('#petModalPanel'),
+        petModalTitle: $('#petModalTitle'),
+        closePetModalButton: $('#closePetModalButton'),
+        cancelPetButton: $('#cancelPetButton'),
+        petForm: $('#petForm'),
+
+        petName: $('#petName'),
+        petSpecies: $('#petSpecies'),
+        petBreed: $('#petBreed'),
+        petGender: $('#petGender'),
+        petBirthDate: $('#petBirthDate'),
+        petWeight: $('#petWeight'),
+        petColor: $('#petColor'),
+        petMicrochip: $('#petMicrochip'),
+        ownerName: $('#ownerName'),
+        ownerPhone: $('#ownerPhone'),
+        petNotes: $('#petNotes'),
+
+        petPhotoInput: $('#petPhotoInput'),
+        petImagePreview: $('#petImagePreview'),
+        petImagePlaceholder: $('#petImagePlaceholder'),
+        petImage: $('#petImage'),
+        removePetImageButton: $('#removePetImageButton'),
+
+        notesCounter: $('#notesCounter'),
+
+        savePetButton: $('#savePetButton'),
+        savePetIcon: $('#savePetIcon'),
+        savePetText: $('#savePetText'),
+
+        deleteModal: $('#deleteModal'),
+        deleteModalDescription: $('#deleteModalDescription'),
+        cancelDeleteButton: $('#cancelDeleteButton'),
+        confirmDeleteButton: $('#confirmDeleteButton'),
+
+        authGate: $('#authGate'),
+        authForm: $('#authForm'),
+        authName: $('#authName'),
+        authNameLabel: $('#authNameLabel'),
+        authNameError: $('#authNameError'),
+        authEmail: $('#authEmail'),
+        authEmailError: $('#authEmailError'),
+        authPassword: $('#authPassword'),
+        authPasswordError: $('#authPasswordError'),
+        authLoginTab: $('#authLoginTab'),
+        authRegisterTab: $('#authRegisterTab'),
+        authTitle: $('#authTitle'),
+        authSubtitle: $('#authSubtitle'),
+        authSubmitButton: $('#authSubmitButton'),
+        authSubmitText: $('#authSubmitText'),
+        authDemoHint: $('#authDemoHint'),
+        togglePasswordButton: $('#togglePasswordButton'),
+        logoutButton: $('#logoutButton'),
+        headerOwnerName: $('#headerOwnerName'),
+        headerOwnerAvatar: $('#headerOwnerAvatar'),
+
+        nfcPublicView: $('#nfcPublicView'),
+        nfcPublicContent: $('#nfcPublicContent'),
+        nfcBackButton: $('#nfcBackButton'),
+        petNfcCodePreview: $('#petNfcCodePreview')
+      };
+
+      /* =========================================================
+         UTILITIES
+      ========================================================== */
+
+      function normalizeText(value) {
+        return String(value ?? '')
+          .trim()
+          .replace(/\s+/g, ' ');
+      }
+
+      function escapeHTML(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function generateId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+
+        return `pet_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      }
+
+      function generateNfcCode() {
+        const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let result = 'PC-';
+        const bytes = new Uint8Array(10);
+
+        if (window.crypto?.getRandomValues) {
+          window.crypto.getRandomValues(bytes);
+
+          for (let i = 0; i < 10; i++) {
+            result += alphabet[bytes[i] % alphabet.length];
+          }
+        } else {
+          for (let i = 0; i < 10; i++) {
+            result += alphabet[Math.floor(Math.random() * alphabet.length)];
+          }
+        }
+
+        return result.slice(0, 8) + '-' + result.slice(8);
+      }
+
+      function ensureUniqueNfcCode(existingCode = '') {
+        let code = normalizeText(existingCode).toUpperCase();
+
+        const used = new Set(
+          pets
+            .filter(pet => pet.id !== editingPetId)
+            .map(pet => pet.nfcCode)
+        );
+
+        if (!code || used.has(code)) {
+          do {
+            code = generateNfcCode();
+          } while (used.has(code));
+        }
+
+        return code;
+      }
+
+      function formatDate(dateString, includeYear = true) {
+        if (!dateString) {
+          return 'Chưa cập nhật';
+        }
+
+        const date = new Date(`${dateString}T00:00:00`);
+
+        if (Number.isNaN(date.getTime())) {
+          return 'Chưa cập nhật';
+        }
+
+        return new Intl.DateTimeFormat('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          ...(includeYear ? { year: 'numeric' } : {})
+        }).format(date);
+      }
+
+      function formatDateTime(date) {
+        return new Intl.DateTimeFormat('vi-VN', {
+          dateStyle: 'medium',
+          timeStyle: 'short'
+        }).format(date);
+      }
+
+      function formatWeight(weight) {
+        const value = Number(weight);
+
+        if (!Number.isFinite(value) || value <= 0) {
+          return 'Chưa cập nhật';
+        }
+
+        return `${value.toLocaleString('vi-VN', {
+          maximumFractionDigits: 1
+        })} kg`;
+      }
+
+      function calculateAge(birthDate) {
+        if (!birthDate) {
+          return 'Chưa cập nhật';
+        }
+
+        const birth = new Date(`${birthDate}T00:00:00`);
+
+        if (Number.isNaN(birth.getTime())) {
+          return 'Chưa cập nhật';
+        }
+
+        const today = new Date();
+
+        let years = today.getFullYear() - birth.getFullYear();
+        let months = today.getMonth() - birth.getMonth();
+
+        if (today.getDate() < birth.getDate()) {
+          months--;
+        }
+
+        if (months < 0) {
+          years--;
+          months += 12;
+        }
+
+        if (years > 0) {
+          return `${years} tuổi${months > 0 ? ` ${months} tháng` : ''}`;
+        }
+
+        if (months > 0) {
+          return `${months} tháng`;
+        }
+
+        return 'Dưới 1 tháng';
+      }
+
+      function todayInputValue() {
+        const now = new Date();
+
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+
+        return `${y}-${m}-${d}`;
+      }
+
+      function getInitials(name) {
+        const clean = normalizeText(name);
+
+        if (!clean) {
+          return 'P';
+        }
+
+        const parts = clean.split(' ').filter(Boolean);
+
+        if (parts.length === 1) {
+          return parts[0].charAt(0).toUpperCase();
+        }
+
+        return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+      }
+
+      function getPetIcon(species) {
+        if (species === 'Mèo') {
+          return 'fa-cat';
+        }
+
+        if (species === 'Chó') {
+          return 'fa-dog';
+        }
+
+        return 'fa-paw';
+      }
+
+      function getGenderIcon(gender) {
+        return gender === 'Đực'
+          ? '<i class="fa-solid fa-mars"></i>'
+          : '<i class="fa-solid fa-venus"></i>';
+      }
+
+      /* =========================================================
+         PET STORAGE
+      ========================================================== */
+
+      function safeParsePets(raw) {
+        try {
+          const parsed = JSON.parse(raw);
+
+          if (!Array.isArray(parsed)) {
+            return [];
+          }
+
+          return parsed
+            .filter(Boolean)
+            .map(normalizePetRecord);
+        } catch {
+          return [];
+        }
+      }
+
+      function normalizePetRecord(pet) {
+        return {
+          id: String(pet.id || generateId()),
+          ownerId: String(pet.ownerId || currentOwner?.id || ''),
+          nfcCode:
+            normalizeText(pet.nfcCode).toUpperCase() ||
+            generateNfcCode(),
+
+          name: normalizeText(pet.name),
+          species: normalizeText(pet.species),
+          breed: normalizeText(pet.breed),
+          gender: normalizeText(pet.gender),
+
+          birthDate: pet.birthDate || '',
+
+          weight:
+            pet.weight === '' || pet.weight == null
+              ? ''
+              : Number(pet.weight),
+
+          color: normalizeText(pet.color),
+          microchip: normalizeText(pet.microchip),
+
+          ownerName:
+            normalizeText(pet.ownerName) ||
+            currentOwner?.name ||
+            'Chủ nhân',
+
+          ownerPhone: normalizeText(pet.ownerPhone),
+          notes: normalizeText(pet.notes),
+
+          image:
+            typeof pet.image === 'string'
+              ? pet.image
+              : '',
+
+          createdAt:
+            pet.createdAt ||
+            new Date().toISOString(),
+
+          updatedAt:
+            pet.updatedAt ||
+            new Date().toISOString()
+        };
+      }
+
+      function getOwnerPetsKey(ownerId = currentOwner?.id) {
+        return `${OWNER_PETS_PREFIX}${ownerId || 'guest'}`;
+      }
+
+      function savePets() {
+        try {
+          if (!currentOwner?.id) {
+            return false;
+          }
+
+          localStorage.setItem(
+            getOwnerPetsKey(),
+            JSON.stringify(pets)
+          );
+
+          return true;
+        } catch (error) {
+          console.error('Không thể lưu dữ liệu:', error);
+
+          showToast(
+            'Không thể lưu dữ liệu. Bộ nhớ trình duyệt có thể đã đầy.',
+            'error'
+          );
+
+          return false;
+        }
+      }
+
+      function loadPets() {
+        try {
+          if (!currentOwner?.id) {
+            pets = [];
+            return;
+          }
+
+          const stored = localStorage.getItem(
+            getOwnerPetsKey()
+          );
+
+          if (stored) {
+            const parsed = safeParsePets(stored);
+
+            const hadMissingNfc = parsed.some(
+              pet => !pet.nfcCode
+            );
+
+            pets = parsed.map(pet => ({
+              ...pet,
+              ownerId: currentOwner.id,
+              nfcCode:
+                pet.nfcCode ||
+                generateNfcCode()
+            }));
+
+            if (hadMissingNfc) {
+              localStorage.setItem(
+                getOwnerPetsKey(),
+                JSON.stringify(pets)
+              );
+            }
+
+            return;
+          }
+
+          /* Migrate hồ sơ cũ từ phiên bản trước */
+          const legacy = localStorage.getItem(STORAGE_KEY);
+
+          if (legacy) {
+            const migrated = safeParsePets(legacy).map(pet => ({
+              ...pet,
+              ownerId: currentOwner.id,
+              nfcCode:
+                pet.nfcCode ||
+                generateNfcCode()
+            }));
+
+            pets = migrated;
+
+            localStorage.setItem(
+              getOwnerPetsKey(),
+              JSON.stringify(pets)
+            );
+
+            localStorage.removeItem(STORAGE_KEY);
+          } else {
+            pets = [];
+          }
+        } catch (error) {
+          console.error('Không thể đọc dữ liệu:', error);
+          pets = [];
+        }
+      }
+
+      /* =========================================================
+         ACCOUNT STORAGE / AUTH
+      ========================================================== */
+
+      function getAccounts() {
+        try {
+          const raw = localStorage.getItem(
+            ACCOUNTS_KEY
+          );
+
+          const accounts = raw
+            ? JSON.parse(raw)
+            : [];
+
+          return Array.isArray(accounts)
+            ? accounts
+            : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveAccounts(accounts) {
+        localStorage.setItem(
+          ACCOUNTS_KEY,
+          JSON.stringify(accounts)
+        );
+      }
+
+      async function hashPassword(password) {
+        if (window.crypto?.subtle) {
+          const data =
+            new TextEncoder().encode(password);
+
+          const hash =
+            await crypto.subtle.digest(
+              'SHA-256',
+              data
+            );
+
+          return [...new Uint8Array(hash)]
+            .map(byte =>
+              byte.toString(16).padStart(2, '0')
+            )
+            .join('');
+        }
+
+        return btoa(
+          unescape(
+            encodeURIComponent(password)
+          )
+        );
+      }
+
+      function normalizeEmail(email) {
+        return normalizeText(email).toLowerCase();
+      }
+
+      function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+
+      function setAuthError(element, message) {
+        element.textContent = message || '';
+        element.classList.toggle(
+          'hidden',
+          !message
+        );
+      }
+
+      function clearAuthErrors() {
+        setAuthError(
+          elements.authNameError,
+          ''
+        );
+
+        setAuthError(
+          elements.authEmailError,
+          ''
+        );
+
+        setAuthError(
+          elements.authPasswordError,
+          ''
+        );
+
+        [
+          elements.authName,
+          elements.authEmail,
+          elements.authPassword
+        ].forEach(element => {
+          element.classList.remove('invalid');
+        });
+      }
+
+      function setAuthMode(mode) {
+        authMode =
+          mode === 'register'
+            ? 'register'
+            : 'login';
+
+        const registering =
+          authMode === 'register';
+
+        elements.authLoginTab.classList.toggle(
+          'active',
+          !registering
+        );
+
+        elements.authRegisterTab.classList.toggle(
+          'active',
+          registering
+        );
+
+        elements.authName.classList.toggle(
+          'hidden',
+          !registering
+        );
+
+        elements.authNameLabel.classList.toggle(
+          'hidden',
+          !registering
+        );
+
+        elements.authTitle.textContent =
+          registering
+            ? 'Tạo tài khoản'
+            : 'Đăng nhập';
+
+        elements.authSubtitle.textContent =
+          registering
+            ? 'Tạo tài khoản một lần, sau đó quản lý tất cả thú cưng của bạn.'
+            : 'Đăng nhập để xem toàn bộ thú cưng của bạn.';
+
+        elements.authSubmitText.textContent =
+          registering
+            ? 'Tạo tài khoản & vào hệ thống'
+            : 'Đăng nhập';
+
+        elements.authSubmitButton.querySelector(
+          'i'
+        ).className =
+          registering
+            ? 'fa-solid fa-user-plus mr-2'
+            : 'fa-solid fa-right-to-bracket mr-2';
+
+        elements.authDemoHint.innerHTML =
+          registering
+            ? `
+              <div class="font-bold flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved"></i>
+                Lưu ý
+              </div>
+
+              <div class="mt-1">
+                Mật khẩu được băm SHA-256 trước khi lưu vào localStorage.
+                Đây là cơ chế demo frontend, không thay thế xác thực backend cho hệ thống thật.
+              </div>
+            `
+            : `
+              <div class="font-bold flex items-center gap-2">
+                <i class="fa-solid fa-circle-info"></i>
+                Tài khoản trên thiết bị này
+              </div>
+
+              <div class="mt-1">
+                Dữ liệu thú cưng được tách theo tài khoản.
+                Sau khi đăng nhập, bạn không cần nhập lại hồ sơ đã tạo.
+              </div>
+            `;
+
+        clearAuthErrors();
+      }
+
+      function showAuthGate(mode = 'login') {
+        setAuthMode(mode);
+
+        elements.authGate.classList.remove(
+          'hidden'
+        );
+
+        elements.nfcPublicView.classList.add(
+          'hidden'
+        );
+
+        elements.body.classList.add(
+          'no-scroll'
+        );
+
+        window.setTimeout(() => {
+          elements.authEmail.focus();
+        }, 50);
+      }
+
+      function hideAuthGate() {
+        elements.authGate.classList.add(
+          'hidden'
+        );
+
+        elements.body.classList.remove(
+          'no-scroll'
+        );
+      }
+
+      function getSession() {
+        try {
+          const raw =
+            localStorage.getItem(
+              SESSION_KEY
+            );
+
+          return raw
+            ? JSON.parse(raw)
+            : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function saveSession(owner) {
+        localStorage.setItem(
+          SESSION_KEY,
+          JSON.stringify({
+            id: owner.id,
+            email: owner.email,
+            name: owner.name,
+            loggedInAt:
+              new Date().toISOString()
+          })
+        );
+      }
+
+      function clearSession() {
+        localStorage.removeItem(
+          SESSION_KEY
+        );
+      }
+
+      function updateOwnerUI() {
+        const name =
+          currentOwner?.name ||
+          'Chủ nhân';
+
+        elements.headerOwnerName.textContent =
+          name;
+
+        elements.headerOwnerAvatar.textContent =
+          getInitials(name);
+
+        elements.headerOwnerAvatar.innerHTML =
+          escapeHTML(
+            getInitials(name)
+          );
+
+        elements.ownerName.value =
+          name;
+      }
+
+      async function authenticate() {
+        if (authBusy) {
+          return;
+        }
+
+        clearAuthErrors();
+
+        const name =
+          normalizeText(
+            elements.authName.value
+          );
+
+        const email =
+          normalizeEmail(
+            elements.authEmail.value
+          );
+
+        const password =
+          elements.authPassword.value;
+
+        let valid = true;
+
+        if (
+          authMode === 'register' &&
+          name.length < 2
+        ) {
+          setAuthError(
+            elements.authNameError,
+            'Vui lòng nhập họ tên từ 2 ký tự.'
+          );
+
+          elements.authName.classList.add(
+            'invalid'
+          );
+
+          valid = false;
+        }
+
+        if (!isValidEmail(email)) {
+          setAuthError(
+            elements.authEmailError,
+            'Email không hợp lệ.'
+          );
+
+          elements.authEmail.classList.add(
+            'invalid'
+          );
+
+          valid = false;
+        }
+
+        if (password.length < 6) {
+          setAuthError(
+            elements.authPasswordError,
+            'Mật khẩu cần ít nhất 6 ký tự.'
+          );
+
+          elements.authPassword.classList.add(
+            'invalid'
+          );
+
+          valid = false;
+        }
+
+        if (!valid) {
+          return;
+        }
+
+        authBusy = true;
+        elements.authSubmitButton.disabled =
+          true;
+
+        elements.authSubmitText.textContent =
+          authMode === 'register'
+            ? 'Đang tạo...'
+            : 'Đang xác thực...';
+
+        try {
+          const accounts =
+            getAccounts();
+
+          const existing =
+            accounts.find(
+              account =>
+                account.email === email
+            );
+
+          const passwordHash =
+            await hashPassword(password);
+
+          if (authMode === 'register') {
+
+            if (existing) {
+              setAuthError(
+                elements.authEmailError,
+                'Email này đã được đăng ký trên thiết bị.'
+              );
+
+              elements.authEmail.classList.add(
+                'invalid'
+              );
+
+              return;
+            }
+
+            const owner = {
+              id:
+                `owner_${generateId()}`,
+              name,
+              email,
+              passwordHash,
+              createdAt:
+                new Date().toISOString()
+            };
+
+            accounts.push(owner);
+            saveAccounts(accounts);
+
+            currentOwner = owner;
+            saveSession(owner);
+            loadPets();
+
+            await enterApp();
+
+            showToast(
+              'Tạo tài khoản thành công. Hồ sơ của bạn đã sẵn sàng.',
+              'success'
+            );
+
+          } else {
+
+            if (
+              !existing ||
+              existing.passwordHash !==
+                passwordHash
+            ) {
+              setAuthError(
+                elements.authPasswordError,
+                'Email hoặc mật khẩu không đúng.'
+              );
+
+              elements.authPassword.classList.add(
+                'invalid'
+              );
+
+              return;
+            }
+
+            currentOwner = existing;
+            saveSession(existing);
+            loadPets();
+
+            await enterApp();
+
+            showToast(
+              `Xin chào ${existing.name}!`,
+              'success'
+            );
+          }
+
+        } finally {
+
+          authBusy = false;
+          elements.authSubmitButton.disabled =
+            false;
+
+          elements.authSubmitText.textContent =
+            authMode === 'register'
+              ? 'Tạo tài khoản & vào hệ thống'
+              : 'Đăng nhập';
+        }
+      }
+
+      async function enterApp() {
+        hideAuthGate();
+
+        elements.nfcPublicView.classList.add(
+          'hidden'
+        );
+
+        elements.nfcBackButton.classList.add(
+          'hidden'
+        );
+
+        updateOwnerUI();
+        renderAll();
+      }
+
+      function logout() {
+        clearSession();
+
+        currentOwner = null;
+        pets = [];
+
+        elements.authForm.reset();
+
+        showAuthGate('login');
+
+        showToast(
+          'Bạn đã đăng xuất khỏi PetCare.',
+          'info'
+        );
+      }
+
+      /* =========================================================
+         TOAST
+      ========================================================== */
+
+      function showToast(
+        message,
+        type = 'success'
+      ) {
+        const toast =
+          document.createElement('div');
+
+        const config = {
+          success: {
+            icon: 'fa-circle-check',
+            iconClass: 'text-emerald-500',
+            title: 'Thành công'
+          },
+
+          error: {
+            icon: 'fa-circle-exclamation',
+            iconClass: 'text-red-500',
+            title: 'Có lỗi'
+          },
+
+          warning: {
+            icon: 'fa-triangle-exclamation',
+            iconClass: 'text-amber-500',
+            title: 'Lưu ý'
+          },
+
+          info: {
+            icon: 'fa-circle-info',
+            iconClass: 'text-blue-500',
+            title: 'Thông tin'
+          }
+
+        }[type] || {
+          icon: 'fa-circle-info',
+          iconClass: 'text-blue-500',
+          title: 'Thông tin'
+        };
+
+        toast.className =
+          'toast bg-white border border-slate-100 shadow-soft rounded-2xl px-4 py-3 flex items-start gap-3';
+
+        toast.innerHTML = `
+          <div class="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+            <i class="fa-solid ${config.icon} ${config.iconClass}"></i>
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-sm">
+              ${escapeHTML(config.title)}
+            </div>
+
+            <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+              ${escapeHTML(message)}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="toast-close text-slate-300 hover:text-slate-500 transition"
+            aria-label="Đóng thông báo">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        `;
+
+        const remove = () => {
+          if (!toast.isConnected) {
+            return;
+          }
+
+          toast.classList.add(
+            'removing'
+          );
+
+          window.setTimeout(
+            () => toast.remove(),
+            220
+          );
+        };
+
+        $('.toast-close', toast)
+          .addEventListener(
+            'click',
+            remove
+          );
+
+        elements.toastContainer.prepend(
+          toast
+        );
+
+        window.setTimeout(
+          remove,
+          4200
+        );
+      }
+
+      /* =========================================================
+         SIDEBAR / NAVIGATION
+      ========================================================== */
+
+      function toggleSidebar(open) {
+        const shouldOpen =
+          Boolean(open);
+
+        elements.sidebar.classList.toggle(
+          'open',
+          shouldOpen
+        );
+
+        if (shouldOpen) {
+
+          elements.mobileOverlay.classList.remove(
+            'hidden'
+          );
+
+          requestAnimationFrame(() => {
+            elements.mobileOverlay.classList.remove(
+              'opacity-0'
+            );
+
+            elements.mobileOverlay.classList.add(
+              'opacity-100'
+            );
+          });
+
+        } else {
+
+          elements.mobileOverlay.classList.remove(
+            'opacity-100'
+          );
+
+          elements.mobileOverlay.classList.add(
+            'opacity-0'
+          );
+
+          window.setTimeout(() => {
+
+            if (
+              !elements.sidebar.classList.contains(
+                'open'
+              )
+            ) {
+              elements.mobileOverlay.classList.add(
+                'hidden'
+              );
+            }
+
+          }, 250);
+        }
+      }
+
+      function showSection(sectionName) {
+
+        const validSections = [
+          'dashboard',
+          'pets',
+          'health',
+          'expenses'
+        ];
+
+        const section =
+          validSections.includes(
+            sectionName
+          )
+            ? sectionName
+            : 'dashboard';
+
+        $$('.section').forEach(
+          sectionElement => {
+            sectionElement.classList.add(
+              'hidden'
+            );
+          }
+        );
+
+        const target =
+          $(`#section-${section}`);
+
+        if (target) {
+          target.classList.remove(
+            'hidden'
+          );
+        }
+
+        $$('.nav-item').forEach(item => {
+
+          const isActive =
+            item.dataset.section ===
+            section;
+
+          item.classList.toggle(
+            'active',
+            isActive
+          );
+
+          if (isActive) {
+            item.classList.remove(
+              'text-slate-600'
+            );
+          } else {
+            item.classList.add(
+              'text-slate-600'
+            );
+          }
+        });
+
+        if (window.innerWidth < 1024) {
+          toggleSidebar(false);
+        }
+
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
+
+      /* =========================================================
+         PET MODAL
+      ========================================================== */
+
+      function openPetModal(
+        petId = null
+      ) {
+        if (!currentOwner?.id) {
+          showAuthGate('login');
+          return;
+        }
+
+        editingPetId = petId;
+
+        clearValidation();
+
+        const pet = petId
+          ? pets.find(
+              item =>
+                item.id === petId
+            )
+          : null;
+
+        if (pet) {
+
+          elements.petModalTitle.textContent =
+            'Chỉnh sửa thú cưng';
+
+          elements.savePetIcon.className =
+            'fa-solid fa-floppy-disk mr-2';
+
+          elements.savePetText.textContent =
+            'Cập nhật hồ sơ';
+
+          fillPetForm(pet);
+
+        } else {
+
+          elements.petModalTitle.textContent =
+            'Thêm thú cưng';
+
+          elements.savePetIcon.className =
+            'fa-solid fa-plus mr-2';
+
+          elements.savePetText.textContent =
+            'Lưu thú cưng';
+
+          resetPetForm();
+        }
+
+        elements.petModal.classList.remove(
+          'hidden'
+        );
+
+        elements.petModal.classList.add(
+          'flex'
+        );
+
+        elements.body.classList.add(
+          'no-scroll'
+        );
+
+        window.setTimeout(() => {
+          elements.petName.focus();
+        }, 50);
+      }
+
+      function closePetModal() {
+        if (
+          elements.petModal.classList.contains(
+            'hidden'
+          )
+        ) {
+          return;
+        }
+
+        elements.petModalPanel.classList.add(
+          'modal-panel-closing'
+        );
+
+        elements.petModal.classList.add(
+          'modal-closing'
+        );
+
+        window.setTimeout(() => {
+
+          elements.petModal.classList.remove(
+            'flex'
+          );
+
+          elements.petModal.classList.add(
+            'hidden'
+          );
+
+          elements.petModalPanel.classList.remove(
+            'modal-panel-closing'
+          );
+
+          elements.petModal.classList.remove(
+            'modal-closing'
+          );
+
+          editingPetId = null;
+          pendingImageData = '';
+
+          elements.body.classList.remove(
+            'no-scroll'
+          );
+
+        }, 180);
+      }
+
+      function resetPetForm() {
+        elements.petForm.reset();
+
+        elements.ownerName.value =
+          currentOwner?.name ||
+          'Chủ nhân';
+
+        elements.ownerPhone.value = '';
+
+        elements.petNfcCodePreview.textContent =
+          'Tự động tạo';
+
+        elements.petBirthDate.max =
+          todayInputValue();
+
+        clearValidation();
+        resetImagePreview();
+        updateNotesCounter();
+      }
+
+      function fillPetForm(pet) {
+
+        elements.petName.value =
+          pet.name;
+
+        elements.petSpecies.value =
+          pet.species;
+
+        elements.petBreed.value =
+          pet.breed;
+
+        elements.petGender.value =
+          pet.gender;
+
+        elements.petBirthDate.value =
+          pet.birthDate || '';
+
+        elements.petBirthDate.max =
+          todayInputValue();
+
+        elements.petWeight.value =
+          pet.weight === ''
+            ? ''
+            : pet.weight;
+
+        elements.petColor.value =
+          pet.color;
+
+        elements.petMicrochip.value =
+          pet.microchip;
+
+        elements.ownerName.value =
+          pet.ownerName ||
+          currentOwner?.name ||
+          'Chủ nhân';
+
+        elements.ownerPhone.value =
+          pet.ownerPhone;
+
+        elements.petNotes.value =
+          pet.notes;
+
+        elements.petNfcCodePreview.textContent =
+          pet.nfcCode ||
+          'Tự động tạo';
+
+        pendingImageData =
+          pet.image || '';
+
+        renderImagePreview(
+          pet.image || ''
+        );
+
+        updateNotesCounter();
+      }
+
+      function resetImagePreview() {
+        pendingImageData = '';
+
+        elements.petPhotoInput.value =
+          '';
+
+        elements.petImage.src = '';
+
+        elements.petImage.classList.add(
+          'hidden'
+        );
+
+        elements.petImagePlaceholder.classList.remove(
+          'hidden'
+        );
+
+        elements.removePetImageButton.classList.add(
+          'hidden'
+        );
+      }
+
+      function renderImagePreview(
+        dataUrl
+      ) {
+
+        if (dataUrl) {
+
+          elements.petImage.src =
+            dataUrl;
+
+          elements.petImage.classList.remove(
+            'hidden'
+          );
+
+          elements.petImagePlaceholder.classList.add(
+            'hidden'
+          );
+
+          elements.removePetImageButton.classList.remove(
+            'hidden'
+          );
+
+        } else {
+
+          resetImagePreview();
+        }
+      }
+
+      /* =========================================================
+         VALIDATION
+      ========================================================== */
+
+      function setFieldError(
+        fieldElement,
+        errorElement,
+        message
+      ) {
+        fieldElement.classList.add(
+          'invalid'
+        );
+
+        errorElement.textContent =
+          message;
+
+        errorElement.classList.remove(
+          'hidden'
+        );
+      }
+
+      function clearFieldError(
+        fieldElement,
+        errorElement
+      ) {
+        fieldElement.classList.remove(
+          'invalid'
+        );
+
+        errorElement.textContent =
+          '';
+
+        errorElement.classList.add(
+          'hidden'
+        );
+      }
+
+      function clearValidation() {
+        const validationPairs = [
+          [
+            elements.petName,
+            $('#petNameError')
+          ],
+          [
+            elements.petSpecies,
+            $('#petSpeciesError')
+          ],
+          [
+            elements.petBreed,
+            $('#petBreedError')
+          ],
+          [
+            elements.petGender,
+            $('#petGenderError')
+          ],
+          [
+            elements.petBirthDate,
+            $('#petBirthDateError')
+          ],
+          [
+            elements.petWeight,
+            $('#petWeightError')
+          ],
+          [
+            elements.petMicrochip,
+            $('#petMicrochipError')
+          ],
+          [
+            elements.ownerPhone,
+            $('#ownerPhoneError')
+          ]
+        ];
+
+        validationPairs.forEach(
+          ([field, error]) => {
+
+            if (field && error) {
+              clearFieldError(
+                field,
+                error
+              );
+            }
+          }
+        );
+      }
+
+      function validatePhone(phone) {
+        if (!phone) {
+          return true;
+        }
+
+        return /^[0-9+().\-\s]{8,20}$/.test(
+          phone
+        );
+      }
+
+      function validateForm() {
+
+        clearValidation();
+
+        const name =
+          normalizeText(
+            elements.petName.value
+          );
+
+        const species =
+          normalizeText(
+            elements.petSpecies.value
+          );
+
+        const breed =
+          normalizeText(
+            elements.petBreed.value
+          );
+
+        const gender =
+          normalizeText(
+            elements.petGender.value
+          );
+
+        const birthDate =
+          elements.petBirthDate.value;
+
+        const weight =
+          elements.petWeight.value;
+
+        const microchip =
+          normalizeText(
+            elements.petMicrochip.value
+          );
+
+        const ownerPhone =
+          normalizeText(
+            elements.ownerPhone.value
+          );
+
+        let isValid = true;
+        let firstInvalid = null;
+
+        if (!name) {
+
+          setFieldError(
+            elements.petName,
+            $('#petNameError'),
+            'Vui lòng nhập tên thú cưng.'
+          );
+
+          firstInvalid ||=
+            elements.petName;
+
+          isValid = false;
+
+        } else if (
+          name.length >
+          MAX_NAME_LENGTH
+        ) {
+
+          setFieldError(
+            elements.petName,
+            $('#petNameError'),
+            `Tên không được vượt quá ${MAX_NAME_LENGTH} ký tự.`
+          );
+
+          firstInvalid ||=
+            elements.petName;
+
+          isValid = false;
+        }
+
+        if (!species) {
+
+          setFieldError(
+            elements.petSpecies,
+            $('#petSpeciesError'),
+            'Vui lòng chọn loài.'
+          );
+
+          firstInvalid ||=
+            elements.petSpecies;
+
+          isValid = false;
+        }
+
+        if (!breed) {
+
+          setFieldError(
+            elements.petBreed,
+            $('#petBreedError'),
+            'Vui lòng nhập giống.'
+          );
+
+          firstInvalid ||=
+            elements.petBreed;
+
+          isValid = false;
+
+        } else if (
+          breed.length >
+          MAX_BREED_LENGTH
+        ) {
+
+          setFieldError(
+            elements.petBreed,
+            $('#petBreedError'),
+            `Giống không được vượt quá ${MAX_BREED_LENGTH} ký tự.`
+          );
+
+          firstInvalid ||=
+            elements.petBreed;
+
+          isValid = false;
+        }
+
+        if (!gender) {
+
+          setFieldError(
+            elements.petGender,
+            $('#petGenderError'),
+            'Vui lòng chọn giới tính.'
+          );
+
+          firstInvalid ||=
+            elements.petGender;
+
+          isValid = false;
+        }
+
+        if (birthDate) {
+
+          const birth =
+            new Date(
+              `${birthDate}T00:00:00`
+            );
+
+          const today =
+            new Date(
+              `${todayInputValue()}T00:00:00`
+            );
+
+          if (
+            Number.isNaN(
+              birth.getTime()
+            ) ||
+            birth > today
+          ) {
+
+            setFieldError(
+              elements.petBirthDate,
+              $('#petBirthDateError'),
+              'Ngày sinh không hợp lệ.'
+            );
+
+            firstInvalid ||=
+              elements.petBirthDate;
+
+            isValid = false;
+          }
+        }
+
+        if (weight !== '') {
+
+          const numericWeight =
+            Number(weight);
+
+          if (
+            !Number.isFinite(
+              numericWeight
+            ) ||
+            numericWeight <= 0 ||
+            numericWeight > 999
+          ) {
+
+            setFieldError(
+              elements.petWeight,
+              $('#petWeightError'),
+              'Cân nặng phải lớn hơn 0 và tối đa 999 kg.'
+            );
+
+            firstInvalid ||=
+              elements.petWeight;
+
+            isValid = false;
+          }
+        }
+
+        if (
+          microchip &&
+          !/^[a-zA-Z0-9\-]{4,30}$/.test(
+            microchip
+          )
+        ) {
+
+          setFieldError(
+            elements.petMicrochip,
+            $('#petMicrochipError'),
+            'Mã Microchip chỉ chứa chữ, số và dấu gạch ngang.'
+          );
+
+          firstInvalid ||=
+            elements.petMicrochip;
+
+          isValid = false;
+        }
+
+        const normalizedMicrochip =
+          microchip.toLowerCase();
+
+        if (normalizedMicrochip) {
+
+          const duplicate =
+            pets.some(pet =>
+              pet.id !== editingPetId &&
+              normalizeText(
+                pet.microchip
+              ).toLowerCase() ===
+                normalizedMicrochip
+            );
+
+          if (duplicate) {
+
+            setFieldError(
+              elements.petMicrochip,
+              $('#petMicrochipError'),
+              'Mã Microchip này đã tồn tại trong hệ thống.'
+            );
+
+            firstInvalid ||=
+              elements.petMicrochip;
+
+            isValid = false;
+          }
+        }
+
+        if (!validatePhone(ownerPhone)) {
+
+          setFieldError(
+            elements.ownerPhone,
+            $('#ownerPhoneError'),
+            'Số điện thoại không hợp lệ.'
+          );
+
+          firstInvalid ||=
+            elements.ownerPhone;
+
+          isValid = false;
+        }
+
+        if (firstInvalid) {
+          firstInvalid.focus();
+        }
+
+        return isValid;
+      }
+
+      /* =========================================================
+         FORM DATA
+      ========================================================== */
+
+      function getPetFromForm(
+        existingPet = null
+      ) {
+
+        const now =
+          new Date().toISOString();
+
+        return normalizePetRecord({
+
+          id:
+            existingPet?.id ||
+            generateId(),
+
+          ownerId:
+            currentOwner?.id ||
+            '',
+
+          nfcCode:
+            ensureUniqueNfcCode(
+              existingPet?.nfcCode
+            ),
+
+          name:
+            normalizeText(
+              elements.petName.value
+            ),
+
+          species:
+            normalizeText(
+              elements.petSpecies.value
+            ),
+
+          breed:
+            normalizeText(
+              elements.petBreed.value
+            ),
+
+          gender:
+            normalizeText(
+              elements.petGender.value
+            ),
+
+          birthDate:
+            elements.petBirthDate.value ||
+            '',
+
+          weight:
+            elements.petWeight.value === ''
+              ? ''
+              : Number(
+                  elements.petWeight.value
+                ),
+
+          color:
+            normalizeText(
+              elements.petColor.value
+            ),
+
+          microchip:
+            normalizeText(
+              elements.petMicrochip.value
+            ),
+
+          ownerName:
+            normalizeText(
+              elements.ownerName.value
+            ) ||
+            currentOwner?.name ||
+            'Chủ nhân',
+
+          ownerPhone:
+            normalizeText(
+              elements.ownerPhone.value
+            ),
+
+          notes:
+            normalizeText(
+              elements.petNotes.value
+            ),
+
+          image:
+            pendingImageData || '',
+
+          createdAt:
+            existingPet?.createdAt ||
+            now,
+
+          updatedAt:
+            now
+        });
+      }
+
+      /* =========================================================
+         SAVE PET
+      ========================================================== */
+
+      async function handlePetSubmit(event) {
+
+        event.preventDefault();
+
+        if (!currentOwner?.id) {
+          showAuthGate('login');
+          return;
+        }
+
+        if (!validateForm()) {
+
+          showToast(
+            'Vui lòng kiểm tra lại các trường bắt buộc.',
+            'warning'
+          );
+
+          return;
+        }
+
+        const oldLabel =
+          elements.savePetText.textContent;
+
+        elements.savePetButton.disabled =
+          true;
+
+        elements.savePetIcon.className =
+          'fa-solid fa-spinner fa-spin mr-2';
+
+        elements.savePetText.textContent =
+          editingPetId
+            ? 'Đang cập nhật...'
+            : 'Đang lưu...';
+
+        await new Promise(
+          resolve =>
+            requestAnimationFrame(resolve)
+        );
+
+        const existingPet =
+          editingPetId
+            ? pets.find(
+                pet =>
+                  pet.id ===
+                  editingPetId
+              )
+            : null;
+
+        const pet =
+          getPetFromForm(
+            existingPet
+          );
+
+        if (existingPet) {
+
+          const index =
+            pets.findIndex(
+              item =>
+                item.id ===
+                editingPetId
+            );
+
+          if (index === -1) {
+
+            elements.savePetButton.disabled =
+              false;
+
+            elements.savePetIcon.className =
+              'fa-solid fa-floppy-disk mr-2';
+
+            elements.savePetText.textContent =
+              oldLabel;
+
+            showToast(
+              'Không tìm thấy hồ sơ cần cập nhật.',
+              'error'
+            );
+
+            return;
+          }
+
+          pets[index] = pet;
+
+        } else {
+
+          pets.unshift(pet);
+        }
+
+        const saved =
+          savePets();
+
+        if (!saved) {
+
+          elements.savePetButton.disabled =
+            false;
+
+          elements.savePetIcon.className =
+            editingPetId
+              ? 'fa-solid fa-floppy-disk mr-2'
+              : 'fa-solid fa-plus mr-2';
+
+          elements.savePetText.textContent =
+            oldLabel;
+
+          return;
+        }
+
+        renderAll();
+
+        closePetModal();
+
+        showToast(
+          existingPet
+            ? `Đã cập nhật hồ sơ của ${pet.name}.`
+            : `Đã thêm ${pet.name} vào hệ thống.`,
+          'success'
+        );
+
+        if (!existingPet) {
+          showSection('pets');
+        }
+      }
+
+      /* =========================================================
+         IMAGE UPLOAD
+      ========================================================== */
+
+      function handlePhotoChange(event) {
+
+        const file =
+          event.target.files?.[0];
+
+        if (!file) {
+          return;
+        }
+
+        const supportedTypes = [
+          'image/jpeg',
+          'image/png',
+          'image/webp'
+        ];
+
+        if (
+          !supportedTypes.includes(
+            file.type
+          )
+        ) {
+
+          event.target.value = '';
+
+          showToast(
+            'Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP.',
+            'warning'
+          );
+
+          return;
+        }
+
+        if (
+          file.size >
+          MAX_IMAGE_SIZE
+        ) {
+
+          event.target.value = '';
+
+          showToast(
+            'Ảnh không được vượt quá 2 MB.',
+            'warning'
+          );
+
+          return;
+        }
+
+        const reader =
+          new FileReader();
+
+        reader.onload = () => {
+
+          if (
+            typeof reader.result !==
+            'string'
+          ) {
+
+            showToast(
+              'Không thể đọc ảnh.',
+              'error'
+            );
+
+            return;
+          }
+
+          pendingImageData =
+            reader.result;
+
+          renderImagePreview(
+            reader.result
+          );
+        };
+
+        reader.onerror = () => {
+
+          showToast(
+            'Không thể đọc ảnh. Vui lòng thử ảnh khác.',
+            'error'
+          );
+        };
+
+        reader.readAsDataURL(file);
+      }
+
+      function removePetImage() {
+
+        pendingImageData = '';
+
+        elements.petPhotoInput.value =
+          '';
+
+        resetImagePreview();
+      }
+
+      /* =========================================================
+         PET FILTER
+      ========================================================== */
+
+      function getFilteredPets() {
+
+        const searchTerm =
+          normalizeText(
+            elements.petSearch.value ||
+            elements.globalSearch.value
+          ).toLowerCase();
+
+        const species =
+          elements.speciesFilter.value;
+
+        const gender =
+          elements.genderFilter.value;
+
+        return pets.filter(pet => {
+
+          const searchable = [
+            pet.name,
+            pet.species,
+            pet.breed,
+            pet.color,
+            pet.microchip,
+            pet.nfcCode
+          ]
+            .join(' ')
+            .toLowerCase();
+
+          const matchesSearch =
+            !searchTerm ||
+            searchable.includes(
+              searchTerm
+            );
+
+          const matchesSpecies =
+            species === 'all' ||
+            pet.species === species;
+
+          const matchesGender =
+            gender === 'all' ||
+            pet.gender === gender;
+
+          return (
+            matchesSearch &&
+            matchesSpecies &&
+            matchesGender
+          );
+        });
+      }
+
+      function handleGlobalSearch(value) {
+
+        const search =
+          normalizeText(value);
+
+        if (
+          search &&
+          $('#section-pets')
+            .classList.contains('hidden')
+        ) {
+
+          elements.petSearch.value =
+            search;
+
+          showSection('pets');
+
+        } else if (!search) {
+
+          elements.petSearch.value =
+            '';
+
+        } else {
+
+          elements.petSearch.value =
+            search;
+        }
+
+        renderPetList();
+      }
+
+      function applyPetFilters() {
+        renderPetList();
+      }
+
+      /* =========================================================
+         NFC PUBLIC DATA
+      ========================================================== */
+
+      function encodePublicPet(pet) {
+
+        const publicData = {
+          v: APP_VERSION,
+
+          code:
+            pet.nfcCode,
+
+          name:
+            pet.name,
+
+          species:
+            pet.species,
+
+          breed:
+            pet.breed,
+
+          gender:
+            pet.gender,
+
+          birthDate:
+            pet.birthDate,
+
+          weight:
+            pet.weight,
+
+          color:
+            pet.color,
+
+          microchip:
+            pet.microchip,
+
+          ownerName:
+            pet.ownerName,
+
+          ownerPhone:
+            pet.ownerPhone,
+
+          notes:
+            pet.notes,
+
+          updatedAt:
+            pet.updatedAt
+        };
+
+        const json =
+          JSON.stringify(
+            publicData
+          );
+
+        const bytes =
+          new TextEncoder().encode(
+            json
+          );
+
+        let binary = '';
+
+        bytes.forEach(byte => {
+          binary += String.fromCharCode(
+            byte
+          );
+        });
+
+        return btoa(binary)
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/g, '');
+      }
+
+      function decodePublicPet(
+        encoded
+      ) {
+
+        try {
+
+          const base64 =
+            encoded
+              .replace(/-/g, '+')
+              .replace(/_/g, '/');
+
+          const padded =
+            base64 +
+            '='.repeat(
+              (4 -
+                base64.length % 4) %
+                4
+            );
+
+          const binary =
+            atob(padded);
+
+          const bytes =
+            Uint8Array.from(
+              binary,
+              char =>
+                char.charCodeAt(0)
+            );
+
+          return JSON.parse(
+            new TextDecoder().decode(
+              bytes
+            )
+          );
+
+        } catch {
+          return null;
+        }
+      }
+
+      function buildNfcUrl(pet) {
+
+        const base =
+          `${window.location.origin}${window.location.pathname}`;
+
+        return `${base}#nfc=${encodeURIComponent(
+          pet.nfcCode
+        )}&data=${encodeURIComponent(
+          encodePublicPet(pet)
+        )}`;
+      }
+
+      function renderPublicNfcPet(
+        pet
+      ) {
+
+        const image =
+          pet.image
+            ? `
+              <img
+                src="${escapeHTML(pet.image)}"
+                alt="Ảnh ${escapeHTML(pet.name)}"
+                class="w-full h-full object-cover">
+            `
+            : `
+              <div class="w-full h-full bg-orange-50 text-orange-400 flex items-center justify-center">
+                <i class="fa-solid ${getPetIcon(pet.species)} text-5xl"></i>
+              </div>
+            `;
+
+        elements.nfcPublicContent.innerHTML = `
+          <article class="public-nfc-card bg-white rounded-[2rem] border border-slate-100 shadow-card overflow-hidden">
+
+            <div class="h-64 sm:h-80 bg-slate-50">
+              ${image}
+            </div>
+
+            <div class="p-6 sm:p-9">
+
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+
+                <div>
+
+                  <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Hồ sơ NFC hợp lệ
+                  </div>
+
+                  <h1 class="text-3xl sm:text-4xl font-extrabold mt-4">
+                    ${escapeHTML(
+                      pet.name ||
+                      'Thú cưng'
+                    )}
+                  </h1>
+
+                  <p class="text-slate-500 mt-1">
+                    ${escapeHTML(
+                      pet.breed ||
+                      pet.species ||
+                      'Chưa cập nhật'
+                    )}
+                  </p>
+                </div>
+
+                <div class="nfc-pulse w-16 h-16 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-2xl shrink-0">
+                  <i class="fa-solid fa-wifi"></i>
+                </div>
+              </div>
+
+              <div class="mt-7 grid grid-cols-2 md:grid-cols-3 gap-3">
+
+                ${[
+                  [
+                    'Loài',
+                    pet.species || '—',
+                    'fa-paw'
+                  ],
+                  [
+                    'Giới tính',
+                    pet.gender || '—',
+                    pet.gender === 'Đực'
+                      ? 'fa-mars'
+                      : 'fa-venus'
+                  ],
+                  [
+                    'Tuổi',
+                    calculateAge(
+                      pet.birthDate
+                    ),
+                    'fa-cake-candles'
+                  ],
+                  [
+                    'Cân nặng',
+                    formatWeight(
+                      pet.weight
+                    ),
+                    'fa-weight-scale'
+                  ],
+                  [
+                    'Ngày sinh',
+                    formatDate(
+                      pet.birthDate
+                    ),
+                    'fa-calendar'
+                  ],
+                  [
+                    'Màu lông',
+                    pet.color || '—',
+                    'fa-palette'
+                  ]
+                ]
+                  .map(
+                    ([
+                      label,
+                      value,
+                      icon
+                    ]) => `
+                      <div class="rounded-2xl bg-slate-50 p-4">
+
+                        <div class="text-[11px] text-slate-400">
+                          ${label}
+                        </div>
+
+                        <div class="font-bold text-sm mt-1">
+                          ${escapeHTML(
+                            value
+                          )}
+                        </div>
+                      </div>
+                    `
+                  )
+                  .join('')}
+              </div>
+
+              <div class="mt-5 rounded-2xl border border-slate-100 p-5">
+
+                <div class="flex items-center justify-between gap-3">
+
+                  <div>
+                    <div class="text-xs text-slate-400">
+                      Mã NFC
+                    </div>
+
+                    <div class="nfc-code font-extrabold text-orange-600 mt-1">
+                      ${escapeHTML(
+                        pet.code ||
+                        pet.nfcCode ||
+                        '—'
+                      )}
+                    </div>
+                  </div>
+
+                  <i class="fa-solid fa-microchip text-2xl text-slate-300"></i>
+                </div>
+
+                ${
+                  pet.microchip
+                    ? `
+                      <div class="mt-4 pt-4 border-t border-slate-100 text-sm">
+                        <span class="text-slate-400">
+                          Microchip:
+                        </span>
+
+                        <strong>
+                          ${escapeHTML(
+                            pet.microchip
+                          )}
+                        </strong>
+                      </div>
+                    `
+                    : ''
+                }
+              </div>
+
+              <div class="mt-5 rounded-2xl bg-emerald-50 p-5">
+
+                <div class="font-bold text-emerald-800">
+                  <i class="fa-solid fa-user mr-2"></i>
+                  Người chăm sóc
+                </div>
+
+                <div class="text-sm text-emerald-900/80 mt-2">
+                  ${escapeHTML(
+                    pet.ownerName ||
+                    'Chủ nhân'
+                  )}
+                </div>
+
+                ${
+                  pet.ownerPhone
+                    ? `
+                      <a
+                        href="tel:${escapeHTML(
+                          pet.ownerPhone
+                        )}"
+                        class="inline-flex items-center gap-2 mt-3 text-sm font-bold text-emerald-700 hover:text-emerald-900">
+                        <i class="fa-solid fa-phone"></i>
+                        ${escapeHTML(
+                          pet.ownerPhone
+                        )}
+                      </a>
+                    `
+                    : ''
+                }
+              </div>
+
+              ${
+                pet.notes
+                  ? `
+                    <div class="mt-5 rounded-2xl bg-orange-50 p-5">
+
+                      <div class="font-bold text-orange-800">
+                        <i class="fa-solid fa-note-sticky mr-2"></i>
+                        Ghi chú chăm sóc
+                      </div>
+
+                      <p class="text-sm text-orange-900/75 mt-2 leading-relaxed">
+                        ${escapeHTML(
+                          pet.notes
+                        )}
+                      </p>
+                    </div>
+                  `
+                  : ''
+              }
+
+              <div class="mt-6 text-center text-xs text-slate-400">
+                Hồ sơ được cập nhật
+                ${escapeHTML(
+                  formatDateTime(
+                    new Date(
+                      pet.updatedAt ||
+                      Date.now()
+                    )
+                  )
+                )}.
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
+      function getNfcPayloadFromLocation() {
+
+        const hash =
+          window.location.hash.replace(
+            /^#/,
+            ''
+          );
+
+        if (
+          !hash.startsWith('nfc=')
+        ) {
+          return null;
+        }
+
+        const params =
+          new URLSearchParams(
+            hash
+          );
+
+        const code =
+          params.get('nfc') || '';
+
+        const data =
+          params.get('data') || '';
+
+        return {
+          code,
+          data
+        };
+      }
+
+      function showNfcRoute(
+        payload
+      ) {
+
+        if (!payload?.code) {
+          return false;
+        }
+
+        let pet =
+          payload.data
+            ? decodePublicPet(
+                payload.data
+              )
+            : null;
+
+        if (
+          !pet &&
+          currentOwner
+        ) {
+          pet =
+            pets.find(
+              item =>
+                item.nfcCode ===
+                payload.code
+            );
+        }
+
+        elements.authGate.classList.add(
+          'hidden'
+        );
+
+        elements.nfcPublicView.classList.remove(
+          'hidden'
+        );
+
+        elements.body.classList.add(
+          'no-scroll'
+        );
+
+        elements.nfcBackButton.classList.toggle(
+          'hidden',
+          !currentOwner
+        );
+
+        if (!pet) {
+
+          elements.nfcPublicContent.innerHTML = `
+            <div class="bg-white rounded-[2rem] border border-slate-100 shadow-card p-8 sm:p-12 text-center">
+
+              <div class="mx-auto w-16 h-16 rounded-3xl bg-red-50 text-red-500 flex items-center justify-center text-2xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+
+              <h1 class="text-2xl font-extrabold mt-5">
+                Không tìm thấy hồ sơ NFC
+              </h1>
+
+              <p class="text-sm text-slate-500 mt-2 max-w-md mx-auto">
+                Mã
+                <strong>
+                  ${escapeHTML(
+                    payload.code
+                  )}
+                </strong>
+                chưa có dữ liệu công khai hợp lệ hoặc đường dẫn đã bị thay đổi.
+              </p>
+
+              ${
+                currentOwner
+                  ? `
+                    <button
+                      id="nfcReturnInline"
+                      type="button"
+                      class="mt-6 px-5 py-3 rounded-xl bg-orange-500 text-white font-bold">
+                      Về dashboard
+                    </button>
+                  `
+                  : ''
+              }
+            </div>
+          `;
+
+          $('#nfcReturnInline')
+            ?.addEventListener(
+              'click',
+              closeNfcView
+            );
+
+          return true;
+        }
+
+        renderPublicNfcPet(pet);
+
+        return true;
+      }
+
+      function closeNfcView() {
+
+        elements.nfcPublicView.classList.add(
+          'hidden'
+        );
+
+        elements.body.classList.remove(
+          'no-scroll'
+        );
+
+        if (currentOwner) {
+
+          history.replaceState(
+            null,
+            '',
+            window.location.pathname
+          );
+
+          showSection(
+            'dashboard'
+          );
+
+          return;
+        }
+
+        showAuthGate('login');
+      }
+
+      async function writeNfcForPet(
+        pet
+      ) {
+
+        const url =
+          buildNfcUrl(pet);
+
+        if (
+          !('NDEFReader' in window)
+        ) {
+
+          if (
+            navigator.clipboard?.writeText
+          ) {
+            await navigator.clipboard
+              .writeText(url)
+              .catch(() => {});
+          }
+
+          showNfcManager(
+            pet,
+            url,
+            'Thiết bị/trình duyệt này chưa hỗ trợ Web NFC. Bạn vẫn có thể sao chép URL để ghi bằng ứng dụng NFC.'
+          );
+
+          return;
+        }
+
+        try {
+
+          const ndef =
+            new NDEFReader();
+
+          await ndef.write({
+            records: [
+              {
+                recordType: 'url',
+                data: url
+              }
+            ]
+          });
+
+          showToast(
+            `Đã ghi ${pet.nfcCode} vào chip NFC.`,
+            'success'
+          );
+
+          showNfcManager(
+            pet,
+            url,
+            'Đã ghi thành công URL hồ sơ vào chip NFC.'
+          );
+
+        } catch (error) {
+
+          console.error(error);
+
+          showNfcManager(
+            pet,
+            url,
+            'Không thể ghi NFC tự động. Hãy kiểm tra HTTPS, quyền NFC và đưa chip lại gần điện thoại.'
+          );
+        }
+      }
+
+      async function scanNfc() {
+
+        if (
+          !('NDEFReader' in window)
+        ) {
+
+          showToast(
+            'Trình duyệt này chưa hỗ trợ Web NFC. Bạn có thể chạm chip để mở URL đã ghi.',
+            'warning'
+          );
+
+          return;
+        }
+
+        try {
+
+          const ndef =
+            new NDEFReader();
+
+          await ndef.scan();
+
+          showToast(
+            'Đang chờ chip NFC. Hãy chạm chip vào điện thoại.',
+            'info'
+          );
+
+          ndef.onreading = event => {
+
+            for (
+              const record of
+              event.message.records
+            ) {
+
+              if (
+                record.recordType ===
+                'url'
+              ) {
+
+                const decoder =
+                  new TextDecoder(
+                    record.encoding ||
+                    'utf-8'
+                  );
+
+                const url =
+                  decoder.decode(
+                    record.data
+                  );
+
+                try {
+
+                  const parsed =
+                    new URL(url);
+
+                  window.location.href =
+                    parsed.href;
+
+                } catch {
+
+                  showToast(
+                    'NFC chứa dữ liệu URL không hợp lệ.',
+                    'error'
+                  );
+                }
+              }
+            }
+          };
+
+        } catch (error) {
+
+          console.error(error);
+
+          showToast(
+            'Không thể khởi động quét NFC. Hãy dùng HTTPS và cấp quyền NFC.',
+            'error'
+          );
+        }
+      }
+
+      function showNfcManager(
+        pet,
+        url = buildNfcUrl(pet),
+        message = ''
+      ) {
+
+        const existing =
+          $('#nfcManagerModal');
+
+        existing?.remove();
+
+        const modal =
+          document.createElement(
+            'div'
+          );
+
+        modal.id =
+          'nfcManagerModal';
+
+        modal.className =
+          'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 modal-backdrop';
+
+        modal.innerHTML = `
+          <div class="modal-panel bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden">
+
+            <div class="p-5 sm:p-7 border-b border-slate-100 flex items-center justify-between">
+
+              <div>
+                <div class="text-xs font-bold text-orange-500 uppercase tracking-wider">
+                  NFC của ${escapeHTML(
+                    pet.name
+                  )}
+                </div>
+
+                <h2 class="text-2xl font-extrabold mt-1">
+                  Gán chip & tra cứu
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                data-nfc-close
+                class="w-10 h-10 rounded-xl hover:bg-slate-100 text-slate-500">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div class="p-5 sm:p-7">
+
+              <div class="rounded-2xl bg-orange-50 border border-orange-100 p-5 flex items-center justify-between gap-4">
+
+                <div>
+                  <div class="text-xs text-orange-700/70">
+                    Mã NFC duy nhất
+                  </div>
+
+                  <div class="nfc-code text-xl font-extrabold text-orange-700 mt-1">
+                    ${escapeHTML(
+                      pet.nfcCode
+                    )}
+                  </div>
+                </div>
+
+                <div class="w-14 h-14 rounded-2xl bg-white text-orange-500 flex items-center justify-center text-xl shadow-sm">
+                  <i class="fa-solid fa-microchip"></i>
+                </div>
+              </div>
+
+              ${
+                message
+                  ? `
+                    <div class="mt-4 rounded-xl bg-emerald-50 text-emerald-700 text-sm p-3">
+                      <i class="fa-solid fa-circle-info mr-2"></i>
+                      ${escapeHTML(
+                        message
+                      )}
+                    </div>
+                  `
+                  : ''
+              }
+
+              <label class="block text-xs font-bold text-slate-500 mt-5 mb-2">
+                URL được ghi vào chip
+              </label>
+
+              <textarea
+                readonly
+                rows="3"
+                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-600 resize-none">${escapeHTML(
+                  url
+                )}</textarea>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+
+                <button
+                  type="button"
+                  data-nfc-write
+                  class="px-4 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold">
+                  <i class="fa-solid fa-wifi mr-2"></i>
+                  Ghi NFC
+                </button>
+
+                <button
+                  type="button"
+                  data-nfc-copy
+                  class="px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold">
+                  <i class="fa-regular fa-copy mr-2"></i>
+                  Sao chép
+                </button>
+
+                <button
+                  type="button"
+                  data-nfc-open
+                  class="px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold">
+                  <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>
+                  Mở hồ sơ
+                </button>
+              </div>
+
+              <button
+                type="button"
+                data-nfc-scan
+                class="w-full mt-3 px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold">
+                <i class="fa-solid fa-mobile-screen-button mr-2"></i>
+                Quét chip NFC bằng điện thoại này
+              </button>
+
+              <p class="text-[11px] text-slate-400 mt-4 leading-relaxed">
+                Web NFC cần trình duyệt hỗ trợ và thường yêu cầu HTTPS.
+                Nếu không hỗ trợ, nút sao chép URL vẫn cho phép bạn ghi bằng ứng dụng NFC chuyên dụng.
+              </p>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(
+          modal
+        );
+
+        modal.addEventListener(
+          'click',
+          event => {
+
+            if (
+              event.target === modal ||
+              event.target.closest(
+                '[data-nfc-close]'
+              )
+            ) {
+              modal.remove();
+            }
+
+            if (
+              event.target.closest(
+                '[data-nfc-copy]'
+              )
+            ) {
+
+              navigator.clipboard
+                ?.writeText(url)
+                .then(() =>
+                  showToast(
+                    'Đã sao chép URL NFC.',
+                    'success'
+                  )
+                )
+                .catch(() =>
+                  showToast(
+                    'Không thể sao chép tự động.',
+                    'warning'
+                  )
+                );
+            }
+
+            if (
+              event.target.closest(
+                '[data-nfc-open]'
+              )
+            ) {
+              window.open(
+                url,
+                '_blank',
+                'noopener'
+              );
+            }
+
+            if (
+              event.target.closest(
+                '[data-nfc-write]'
+              )
+            ) {
+              writeNfcForPet(pet);
+            }
+
+            if (
+              event.target.closest(
+                '[data-nfc-scan]'
+              )
+            ) {
+              scanNfc();
+            }
+          }
+        );
+      }
+
+      /* =========================================================
+         PET CARD
+      ========================================================== */
+
+      function renderPetCard(
+        pet,
+        compact = false
+      ) {
+
+        const icon =
+          getPetIcon(
+            pet.species
+          );
+
+        const age =
+          calculateAge(
+            pet.birthDate
+          );
+
+        const genderColor =
+          pet.gender === 'Đực'
+            ? 'bg-blue-50 text-blue-600'
+            : 'bg-pink-50 text-pink-600';
+
+        const imageMarkup =
+          pet.image
+            ? `
+              <img
+                src="${escapeHTML(
+                  pet.image
+                )}"
+                alt="Ảnh ${escapeHTML(
+                  pet.name
+                )}"
+                class="w-full h-full object-cover"
+                loading="lazy">
+            `
+            : `
+              <div class="w-full h-full bg-orange-50 text-orange-400 flex items-center justify-center">
+                <i class="fa-solid ${icon} ${
+                  compact
+                    ? 'text-2xl'
+                    : 'text-4xl'
+                }"></i>
+              </div>
+            `;
+
+        if (compact) {
+
+          return `
+            <article class="pet-card bg-slate-50 border border-slate-100 rounded-2xl p-4">
+
+              <div class="flex items-center gap-3">
+
+                <div class="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
+                  ${imageMarkup}
+                </div>
+
+                <div class="min-w-0 flex-1">
+
+                  <div class="font-bold truncate">
+                    ${escapeHTML(
+                      pet.name
+                    )}
+                  </div>
+
+                  <div class="text-xs text-slate-500 truncate mt-1">
+                    ${escapeHTML(
+                      pet.breed ||
+                      pet.species
+                    )}
+                  </div>
+
+                  <div class="text-[11px] text-slate-400 mt-1">
+                    ${escapeHTML(
+                      age
+                    )}
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 mt-3">
+
+                <span class="nfc-code text-[10px] text-orange-600 font-bold truncate">
+                  ${escapeHTML(
+                    pet.nfcCode ||
+                    ''
+                  )}
+                </span>
+
+                <button
+                  type="button"
+                  data-action="edit"
+                  data-pet-id="${escapeHTML(
+                    pet.id
+                  )}"
+                  class="text-xs font-semibold text-orange-500 hover:text-orange-600 transition whitespace-nowrap">
+                  Xem / chỉnh sửa
+                </button>
+              </div>
+            </article>
+          `;
+        }
+
+        return `
+          <article
+            class="pet-card bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-card"
+            data-pet-card="${escapeHTML(
+              pet.id
+            )}">
+
+            <div class="h-48 bg-slate-50 overflow-hidden">
+              ${imageMarkup}
+            </div>
+
+            <div class="p-5">
+
+              <div class="flex items-start justify-between gap-3">
+
+                <div class="min-w-0">
+
+                  <h3 class="text-lg font-extrabold truncate">
+                    ${escapeHTML(
+                      pet.name
+                    )}
+                  </h3>
+
+                  <p class="text-xs text-slate-400 mt-1 truncate">
+                    ${escapeHTML(
+                      pet.breed ||
+                      'Chưa cập nhật giống'
+                    )}
+                  </p>
+                </div>
+
+                <div class="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold ${genderColor}">
+                  ${getGenderIcon(
+                    pet.gender
+                  )}
+
+                  <span class="ml-1">
+                    ${escapeHTML(
+                      pet.gender ||
+                      '—'
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 mt-5">
+
+                <div class="rounded-xl bg-slate-50 p-3">
+                  <div class="text-[11px] text-slate-400">
+                    Loài
+                  </div>
+
+                  <div class="text-sm font-semibold mt-1">
+                    ${escapeHTML(
+                      pet.species ||
+                      '—'
+                    )}
+                  </div>
+                </div>
+
+                <div class="rounded-xl bg-slate-50 p-3">
+                  <div class="text-[11px] text-slate-400">
+                    Tuổi
+                  </div>
+
+                  <div class="text-sm font-semibold mt-1">
+                    ${escapeHTML(
+                      age
+                    )}
+                  </div>
+                </div>
+
+                <div class="rounded-xl bg-slate-50 p-3">
+                  <div class="text-[11px] text-slate-400">
+                    Cân nặng
+                  </div>
+
+                  <div class="text-sm font-semibold mt-1">
+                    ${escapeHTML(
+                      formatWeight(
+                        pet.weight
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div class="rounded-xl bg-slate-50 p-3">
+                  <div class="text-[11px] text-slate-400">
+                    Ngày sinh
+                  </div>
+
+                  <div class="text-sm font-semibold mt-1">
+                    ${escapeHTML(
+                      formatDate(
+                        pet.birthDate
+                      )
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              ${
+                pet.color ||
+                pet.microchip
+                  ? `
+                    <div class="mt-4 space-y-2">
+
+                      ${
+                        pet.color
+                          ? `
+                            <div class="flex items-center gap-2 text-xs text-slate-500">
+                              <i class="fa-solid fa-palette w-4 text-slate-400"></i>
+
+                              <span class="font-semibold text-slate-600">
+                                Màu:
+                              </span>
+
+                              <span class="truncate">
+                                ${escapeHTML(
+                                  pet.color
+                                )}
+                              </span>
+                            </div>
+                          `
+                          : ''
+                      }
+
+                      ${
+                        pet.microchip
+                          ? `
+                            <div class="flex items-center gap-2 text-xs text-slate-500">
+
+                              <i class="fa-solid fa-microchip w-4 text-slate-400"></i>
+
+                              <span class="font-semibold text-slate-600">
+                                Chip:
+                              </span>
+
+                              <span class="truncate">
+                                ${escapeHTML(
+                                  pet.microchip
+                                )}
+                              </span>
+                            </div>
+                          `
+                          : ''
+                      }
+                    </div>
+                  `
+                  : ''
+              }
+
+              <div class="mt-4 flex items-center justify-between gap-3 rounded-xl bg-orange-50/70 border border-orange-100 px-3 py-2.5">
+
+                <div class="min-w-0">
+
+                  <div class="text-[10px] text-orange-600/70 font-bold uppercase tracking-wider">
+                    Mã NFC
+                  </div>
+
+                  <div class="nfc-code text-xs font-extrabold text-orange-700 truncate mt-0.5">
+                    ${escapeHTML(
+                      pet.nfcCode ||
+                      'Đang tạo'
+                    )}
+                  </div>
+                </div>
+
+                <i class="fa-solid fa-wifi text-orange-400"></i>
+              </div>
+
+              ${
+                pet.notes
+                  ? `
+                    <div class="mt-4 rounded-xl bg-orange-50 p-3">
+
+                      <div class="text-[11px] font-bold text-orange-700">
+                        Ghi chú
+                      </div>
+
+                      <div class="text-xs text-orange-900/70 mt-1 leading-relaxed line-clamp-2">
+                        ${escapeHTML(
+                          pet.notes
+                        )}
+                      </div>
+                    </div>
+                  `
+                  : ''
+              }
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5">
+
+                <button
+                  type="button"
+                  data-action="nfc"
+                  data-pet-id="${escapeHTML(
+                    pet.id
+                  )}"
+                  class="px-3 py-2.5 rounded-xl border border-orange-100 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold transition">
+                  <i class="fa-solid fa-wifi mr-1"></i>
+                  NFC
+                </button>
+
+                <button
+                  type="button"
+                  data-action="edit"
+                  data-pet-id="${escapeHTML(
+                    pet.id
+                  )}"
+                  class="px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
+                  <i class="fa-solid fa-pen-to-square mr-1"></i>
+                  Chỉnh sửa
+                </button>
+
+                <button
+                  type="button"
+                  data-action="delete"
+                  data-pet-id="${escapeHTML(
+                    pet.id
+                  )}"
+                  class="px-3 py-2.5 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition">
+                  <i class="fa-solid fa-trash mr-1"></i>
+                  Xóa
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
+      /* =========================================================
+         RENDER PET LIST
+      ========================================================== */
+
+      function renderPetList() {
+
+        const filteredPets =
+          getFilteredPets();
+
+        if (!pets.length) {
+
+          elements.dashboardPets.innerHTML =
+            renderEmptyDashboardState();
+
+          elements.petsList.innerHTML =
+            renderMainEmptyState();
+
+          return;
+        }
+
+        if (!filteredPets.length) {
+
+          elements.petsList.innerHTML =
+            renderNoResultsState();
+
+          return;
+        }
+
+        elements.petsList.innerHTML =
+          filteredPets
+            .map(pet =>
+              renderPetCard(pet)
+            )
+            .join('');
+      }
+
+      function renderDashboardPets() {
+
+        const recentPets =
+          pets.slice(0, 6);
+
+        if (!recentPets.length) {
+
+          elements.dashboardPets.innerHTML =
+            renderEmptyDashboardState();
+
+          return;
+        }
+
+        elements.dashboardPets.innerHTML =
+          recentPets
+            .map(pet =>
+              renderPetCard(
+                pet,
+                true
+              )
+            )
+            .join('');
+      }
+
+      function renderEmptyDashboardState() {
+        return `
+          <div class="empty-state col-span-full py-10 text-center">
+
+            <div class="mx-auto w-14 h-14 rounded-2xl bg-orange-50 text-orange-400 flex items-center justify-center">
+              <i class="fa-solid fa-paw text-xl"></i>
+            </div>
+
+            <h3 class="font-bold mt-4">
+              Chưa có thú cưng nào
+            </h3>
+
+            <p class="text-sm text-slate-400 mt-1">
+              Hãy thêm bé cưng đầu tiên vào hệ thống.
+            </p>
+
+            <button
+              type="button"
+              data-action="add"
+              class="mt-4 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition shadow-md shadow-orange-200">
+              <i class="fa-solid fa-plus mr-1"></i>
+              Thêm thú cưng
+            </button>
+          </div>
+        `;
+      }
+
+      function renderMainEmptyState() {
+        return `
+          <div class="empty-state col-span-full bg-white border border-slate-100 rounded-2xl shadow-card p-10 text-center">
+
+            <div class="mx-auto w-16 h-16 rounded-3xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl">
+              <i class="fa-solid fa-paw"></i>
+            </div>
+
+            <h3 class="font-extrabold text-xl mt-5">
+              Chưa có thú cưng nào
+            </h3>
+
+            <p class="text-sm text-slate-400 mt-2 max-w-md mx-auto">
+              Tạo hồ sơ thú cưng để bắt đầu theo dõi thông tin, sức khỏe và chăm sóc.
+            </p>
+
+            <button
+              type="button"
+              data-action="add"
+              class="mt-5 px-5 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition shadow-lg shadow-orange-200">
+              <i class="fa-solid fa-plus mr-2"></i>
+              Thêm thú cưng đầu tiên
+            </button>
+          </div>
+        `;
+      }
+
+      function renderNoResultsState() {
+        return `
+          <div class="empty-state col-span-full bg-white border border-slate-100 rounded-2xl shadow-card p-10 text-center">
+
+            <div class="mx-auto w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+
+            <h3 class="font-bold mt-4">
+              Không tìm thấy thú cưng phù hợp
+            </h3>
+
+            <p class="text-sm text-slate-400 mt-1">
+              Thử thay đổi từ khóa hoặc bộ lọc.
+            </p>
+
+            <button
+              type="button"
+              data-action="clear-filter"
+              class="mt-4 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-sm font-semibold transition">
+              Xóa bộ lọc
+            </button>
+          </div>
+        `;
+      }
+
+      /* =========================================================
+         STATS / DASHBOARD
+      ========================================================== */
+
+      function renderStats() {
+
+        elements.statPets.textContent =
+          pets.length.toLocaleString(
+            'vi-VN'
+          );
+
+        elements.statAppointments.textContent =
+          '0';
+
+        elements.statVaccines.textContent =
+          '0';
+
+        elements.statExpenses.textContent =
+          '0 ₫';
+
+        elements.sidebarPetCount.textContent =
+          pets.length.toLocaleString(
+            'vi-VN'
+          );
+
+        elements.notificationDot.classList.toggle(
+          'hidden',
+          pets.length === 0
+        );
+      }
+
+      function renderAppointments() {
+
+        elements.dashboardAppointments.innerHTML = `
+          <div class="py-8 text-center">
+
+            <div class="mx-auto w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
+              <i class="fa-regular fa-calendar"></i>
+            </div>
+
+            <div class="font-bold text-sm mt-3">
+              Chưa có lịch hẹn
+            </div>
+
+            <p class="text-xs text-slate-400 mt-1">
+              Các cuộc hẹn sẽ xuất hiện tại đây.
+            </p>
+          </div>
+        `;
+      }
+
+      function renderCurrentDate() {
+
+        const now =
+          new Date();
+
+        elements.currentDate.textContent =
+          new Intl.DateTimeFormat(
+            'vi-VN',
+            {
+              weekday: 'long',
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            }
+          ).format(now);
+      }
+
+      /* =========================================================
+         GLOBAL RENDER
+      ========================================================== */
+
+      function renderAll() {
+
+        renderStats();
+        renderCurrentDate();
+        renderDashboardPets();
+        renderPetList();
+        renderAppointments();
+      }
+
+      /* =========================================================
+         DELETE MODAL
+      ========================================================== */
+
+      function openDeleteModal(
+        petId
+      ) {
+
+        const pet =
+          pets.find(
+            item =>
+              item.id === petId
+          );
+
+        if (!pet) {
+
+          showToast(
+            'Không tìm thấy hồ sơ thú cưng.',
+            'error'
+          );
+
+          return;
+        }
+
+        pendingDeletePetId =
+          petId;
+
+        elements.deleteModalDescription.innerHTML =
+          `Bạn có chắc muốn xóa hồ sơ <strong class="text-slate-700">${escapeHTML(
+            pet.name
+          )}</strong>? Dữ liệu hồ sơ sẽ bị xóa khỏi trình duyệt và không thể hoàn tác.`;
+
+        elements.deleteModal.classList.remove(
+          'hidden'
+        );
+
+        elements.deleteModal.classList.add(
+          'flex'
+        );
+
+        elements.body.classList.add(
+          'no-scroll'
+        );
+
+        window.setTimeout(() => {
+          elements.confirmDeleteButton.focus();
+        }, 50);
+      }
+
+      function closeDeleteModal() {
+
+        elements.deleteModal.classList.remove(
+          'flex'
+        );
+
+        elements.deleteModal.classList.add(
+          'hidden'
+        );
+
+        pendingDeletePetId =
+          null;
+
+        if (
+          elements.petModal.classList.contains(
+            'hidden'
+          )
+        ) {
+          elements.body.classList.remove(
+            'no-scroll'
+          );
+        }
+      }
+
+      function confirmDelete() {
+
+        if (!pendingDeletePetId) {
+
+          closeDeleteModal();
+          return;
+        }
+
+        const pet =
+          pets.find(
+            item =>
+              item.id ===
+              pendingDeletePetId
+          );
+
+        if (!pet) {
+
+          closeDeleteModal();
+
+          showToast(
+            'Hồ sơ thú cưng không còn tồn tại.',
+            'warning'
+          );
+
+          return;
+        }
+
+        pets =
+          pets.filter(
+            item =>
+              item.id !==
+              pendingDeletePetId
+          );
+
+        const saved =
+          savePets();
+
+        if (!saved) {
+          return;
+        }
+
+        renderAll();
+
+        closeDeleteModal();
+
+        showToast(
+          `Đã xóa hồ sơ ${pet.name}.`,
+          'success'
+        );
+      }
+
+      /* =========================================================
+         NOTES COUNTER
+      ========================================================== */
+
+      function updateNotesCounter() {
+
+        const count =
+          elements.petNotes.value.length;
+
+        elements.notesCounter.textContent =
+          `${count}/500`;
+      }
+
+      /* =========================================================
+         CLEAR FILTER
+      ========================================================== */
+
+      function clearFilters() {
+
+        elements.petSearch.value =
+          '';
+
+        elements.globalSearch.value =
+          '';
+
+        elements.speciesFilter.value =
+          'all';
+
+        elements.genderFilter.value =
+          'all';
+
+        renderPetList();
+      }
+
+      /* =========================================================
+         EVENT DELEGATION
+      ========================================================== */
+
+      function handleDynamicAction(
+        event
+      ) {
+
+        const actionElement =
+          event.target.closest(
+            '[data-action]'
+          );
+
+        if (!actionElement) {
+          return;
+        }
+
+        const action =
+          actionElement.dataset.action;
+
+        const petId =
+          actionElement.dataset.petId ||
+          null;
+
+        if (action === 'add') {
+          openPetModal();
+          return;
+        }
+
+        if (
+          action === 'edit' &&
+          petId
+        ) {
+          openPetModal(petId);
+          return;
+        }
+
+        if (
+          action === 'delete' &&
+          petId
+        ) {
+          openDeleteModal(petId);
+          return;
+        }
+
+        if (
+          action === 'nfc' &&
+          petId
+        ) {
+
+          const pet =
+            pets.find(
+              item =>
+                item.id ===
+                petId
+            );
+
+          if (pet) {
+            showNfcManager(pet);
+          }
+
+          return;
+        }
+
+        if (
+          action ===
+          'clear-filter'
+        ) {
+          clearFilters();
+        }
+      }
+
+      /* =========================================================
+         KEYBOARD / ESC
+      ========================================================== */
+
+      function handleEscape(
+        event
+      ) {
+
+        if (
+          event.key !==
+          'Escape'
+        ) {
+          return;
+        }
+
+        if (
+          !elements.deleteModal.classList.contains(
+            'hidden'
+          )
+        ) {
+          closeDeleteModal();
+          return;
+        }
+
+        if (
+          !elements.petModal.classList.contains(
+            'hidden'
+          )
+        ) {
+          closePetModal();
+          return;
+        }
+
+        toggleSidebar(false);
+      }
+
+      /* =========================================================
+         INITIALIZE EVENT LISTENERS
+      ========================================================== */
+
+      function bindEvents() {
+
+        elements.openSidebarButton?.addEventListener(
+          'click',
+          () =>
+            toggleSidebar(true)
+        );
+
+        elements.closeSidebarButton?.addEventListener(
+          'click',
+          () =>
+            toggleSidebar(false)
+        );
+
+        elements.mobileOverlay?.addEventListener(
+          'click',
+          () =>
+            toggleSidebar(false)
+        );
+
+        $$('.nav-item').forEach(
+          item => {
+
+            item.addEventListener(
+              'click',
+              () => {
+                showSection(
+                  item.dataset.section
+                );
+              }
+            );
+          }
+        );
+
+        $('#sidebarAddPetButton')
+          ?.addEventListener(
+            'click',
+            () =>
+              openPetModal()
+          );
+
+        $('#sidebarScanNfcButton')
+          ?.addEventListener(
+            'click',
+            () =>
+              scanNfc()
+          );
+
+        $('#headerAddPetButton')
+          ?.addEventListener(
+            'click',
+            () =>
+              openPetModal()
+          );
+
+        $('#petsAddPetButton')
+          ?.addEventListener(
+            'click',
+            () =>
+              openPetModal()
+          );
+
+        $('#healthAddPetButton')
+          ?.addEventListener(
+            'click',
+            () =>
+              openPetModal()
+          );
+
+        $('#viewAllPetsButton')
+          ?.addEventListener(
+            'click',
+            () => {
+              showSection(
+                'pets'
+              );
+            }
+          );
+
+        elements.globalSearch?.addEventListener(
+          'input',
+          event => {
+            handleGlobalSearch(
+              event.target.value
+            );
+          }
+        );
+
+        elements.petSearch?.addEventListener(
+          'input',
+          () => {
+            renderPetList();
+          }
+        );
+
+        elements.speciesFilter?.addEventListener(
+          'change',
+          () => {
+            renderPetList();
+          }
+        );
+
+        elements.genderFilter?.addEventListener(
+          'change',
+          () => {
+            renderPetList();
+          }
+        );
+
+        elements.closePetModalButton?.addEventListener(
+          'click',
+          closePetModal
+        );
+
+        elements.cancelPetButton?.addEventListener(
+          'click',
+          closePetModal
+        );
+
+        elements.petModal?.addEventListener(
+          'mousedown',
+          event => {
+
+            if (
+              event.target ===
+              elements.petModal
+            ) {
+              closePetModal();
+            }
+          }
+        );
+
+        elements.petForm?.addEventListener(
+          'submit',
+          handlePetSubmit
+        );
+
+        elements.petPhotoInput?.addEventListener(
+          'change',
+          handlePhotoChange
+        );
+
+        elements.removePetImageButton?.addEventListener(
+          'click',
+          removePetImage
+        );
+
+        elements.petNotes?.addEventListener(
+          'input',
+          updateNotesCounter
+        );
+
+        elements.cancelDeleteButton?.addEventListener(
+          'click',
+          closeDeleteModal
+        );
+
+        elements.confirmDeleteButton?.addEventListener(
+          'click',
+          confirmDelete
+        );
+
+        elements.authLoginTab?.addEventListener(
+          'click',
+          () =>
+            setAuthMode('login')
+        );
+
+        elements.authRegisterTab?.addEventListener(
+          'click',
+          () =>
+            setAuthMode('register')
+        );
+
+        elements.authForm?.addEventListener(
+          'submit',
+          event => {
+            event.preventDefault();
+            authenticate();
+          }
+        );
+
+        elements.togglePasswordButton?.addEventListener(
+          'click',
+          () => {
+
+            const showing =
+              elements.authPassword.type ===
+              'text';
+
+            elements.authPassword.type =
+              showing
+                ? 'password'
+                : 'text';
+
+            elements.togglePasswordButton.innerHTML =
+              showing
+                ? '<i class="fa-regular fa-eye"></i>'
+                : '<i class="fa-regular fa-eye-slash"></i>';
+
+            elements.togglePasswordButton.setAttribute(
+              'aria-label',
+              showing
+                ? 'Hiện mật khẩu'
+                : 'Ẩn mật khẩu'
+            );
+          }
+        );
+
+        elements.logoutButton?.addEventListener(
+          'click',
+          logout
+        );
+
+        elements.nfcBackButton?.addEventListener(
+          'click',
+          closeNfcView
+        );
+
+        elements.deleteModal?.addEventListener(
+          'mousedown',
+          event => {
+
+            if (
+              event.target ===
+              elements.deleteModal
+            ) {
+              closeDeleteModal();
+            }
+          }
+        );
+
+        elements.dashboardPets?.addEventListener(
+          'click',
+          handleDynamicAction
+        );
+
+        elements.petsList?.addEventListener(
+          'click',
+          handleDynamicAction
+        );
+
+        document.addEventListener(
+          'keydown',
+          handleEscape
+        );
+
+        $('#notificationButton')
+          ?.addEventListener(
+            'click',
+            () =>
+              showSection(
+                'health'
+              )
+          );
+
+        window.addEventListener(
+          'hashchange',
+          () => {
+
+            const payload =
+              getNfcPayloadFromLocation();
+
+            if (payload) {
+              showNfcRoute(
+                payload
+              );
+            } else if (
+              currentOwner
+            ) {
+              closeNfcView();
+            }
+          }
+        );
+
+        window.addEventListener(
+          'resize',
+          () => {
+
+            if (
+              window.innerWidth >=
+              1024
+            ) {
+              toggleSidebar(false);
+            }
+          }
+        );
+      }
+
+      /* =========================================================
+         INITIALIZE APP
+      ========================================================== */
+
+      async function init() {
+
+        bindEvents();
+
+        elements.petBirthDate.max =
+          todayInputValue();
+
+        updateNotesCounter();
+
+        setAuthMode(
+          'login'
+        );
+
+        const nfcPayload =
+          getNfcPayloadFromLocation();
+
+        if (nfcPayload) {
+
+          const session =
+            getSession();
+
+          const account =
+            session?.id &&
+            session?.email
+              ? getAccounts().find(
+                  item =>
+                    item.id ===
+                      session.id &&
+                    item.email ===
+                      session.email
+                )
+              : null;
+
+          currentOwner =
+            account || null;
+
+          if (currentOwner) {
+            loadPets();
+          }
+
+          showNfcRoute(
+            nfcPayload
+          );
+
+          console.log(
+            `[PetCare] NFC route ${nfcPayload.code}`
+          );
+
+          return;
+        }
+
+        const session =
+          getSession();
+
+        if (
+          session?.id &&
+          session?.email
+        ) {
+
+          const account =
+            getAccounts().find(
+              item =>
+                item.id ===
+                  session.id &&
+                item.email ===
+                  session.email
+            );
+
+          if (account) {
+
+            currentOwner =
+              account;
+
+            saveSession(
+              account
+            );
+
+            loadPets();
+
+            await enterApp();
+
+            console.log(
+              `[PetCare] Đã khôi phục phiên của ${account.email}. ${pets.length} thú cưng.`
+            );
+
+            return;
+          }
+
+          clearSession();
+        }
+
+        showAuthGate(
+          'login'
+        );
+
+        console.log(
+          `[PetCare] PetCare ${APP_VERSION} đang chờ đăng nhập.`
+        );
+      }
+
+      init();
+
+      /* =========================================================
+         OPTIONAL GLOBAL API
+      ========================================================== */
+
+      window.PetCare = {
+
+        getPets: () =>
+          [...pets],
+
+        openPetModal,
+
+        showSection,
+
+        refresh: () => {
+          loadPets();
+          renderAll();
+        },
+
+        addPetProgrammatically(data) {
+
+          if (!currentOwner?.id) {
+            throw new Error(
+              'Bạn phải đăng nhập trước khi thêm thú cưng.'
+            );
+          }
+
+          const pet =
+            normalizePetRecord({
+              ...data,
+
+              ownerId:
+                currentOwner.id,
+
+              nfcCode:
+                ensureUniqueNfcCode(
+                  data.nfcCode
+                ),
+
+              id:
+                generateId(),
+
+              createdAt:
+                new Date().toISOString(),
+
+              updatedAt:
+                new Date().toISOString()
+            });
+
+          if (
+            !pet.name ||
+            !pet.species ||
+            !pet.breed ||
+            !pet.gender
+          ) {
+            throw new Error(
+              'Thú cưng phải có name, species, breed và gender.'
+            );
+          }
+
+          pets.unshift(pet);
+
+          if (!savePets()) {
+            throw new Error(
+              'Không thể lưu thú cưng.'
+            );
+          }
+
+          renderAll();
+
+          return {
+            ...pet
+          };
+        },
+
+        getCurrentOwner: () =>
+          currentOwner
+            ? {
+                id:
+                  currentOwner.id,
+                name:
+                  currentOwner.name,
+                email:
+                  currentOwner.email
+              }
+            : null,
+
+        getNfcUrl: petId => {
+
+          const pet =
+            pets.find(
+              item =>
+                item.id ===
+                petId
+            );
+
+          return pet
+            ? buildNfcUrl(pet)
+            : null;
+        },
+
+        scanNfc,
+
+        logout
+      };
+
+    })();
+  </script>
+</body>
+</html>
